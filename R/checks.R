@@ -1793,37 +1793,53 @@ checkForPromptComments <- function(pkgdir)
     )
 }
 
-.formatsInParsedRd <- function(rds, tags) {
-    formats <- .tagsExtract(rds, tags, "\\format")
+.formatsInParsedRd <- function(rd, tags) {
+    formats <- .tagsExtract(rd, tags, "\\format")
     value <- paste(formats, collapse = "")
     nzchar(trimws(value)) && length(formats)
 }
 
-.isValidRdSkip <- function(rds, tags) {
-    dt <- docType(rds, tags)
-    identical(dt, "package") ||
-        (identical(dt, "data") && .formatsInParsedRd(rds, tags))
+.skipRdCheck <- function(rd, tags) TRUE
+
+.whichRdCheck <- function(docType) {
+    switch(
+        docType,
+        package =,
+        class = .skipRdCheck,
+        data = .formatsInParsedRd,
+        fun =,
+        .valueInParsedRd
+    )
 }
 
 checkForValueSection <- function(pkgdir)
 {
     all_rds <- .read_all_rds(pkgdir)
     all_tags <- lapply(all_rds, tools:::RdTags)
+    docTypes <- mapply(docType, rd = all_rds, tags = all_tags, SIMPLIFY = FALSE)
+    docTypes[!lengths(docTypes)] <- "fun"
+    funs <- lapply(docTypes, .whichRdCheck)
+    isData <- unlist(docTypes) == "data"
     ok <- mapply(
-        function(rds, tags) {
-            if (.isValidRdSkip(rds, tags))
-                TRUE
-            else
-                .valueInParsedRd(rds, tags)
+        function(afun, rds, atags) {
+            afun(rds, atags)
         },
-        rds = all_rds,
-        tags = all_tags,
+        afun = funs, rds = all_rds, atags = all_tags,
         SIMPLIFY = TRUE
     )
-    if (!all(ok)) {
-        not_oks <- names(ok[!ok])
+    dataOK <- ok[isData]
+    elseOK <- ok[!isData]
+    if (!all(dataOK)) {
+        not_oks <- names(ok[isData][!dataOK])
         handleWarningFiles(
-            "Empty or missing \\value sections found in man pages.",
+            "Empty or missing \\format sections found in data man page(s).",
+            messages = not_oks
+        )
+    }
+    if (!all(elseOK)) {
+        not_oks <- names(ok[!isData][!elseOK])
+        handleWarningFiles(
+            "Empty or missing \\value sections found in man page(s).",
             messages = not_oks
         )
     }
