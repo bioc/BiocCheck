@@ -260,38 +260,40 @@ checkInstDocFolder <- function(pkgdir, pkg_name) {
         )
 }
 
+.parseBiocViews <- function(pkgdir) {
+    desc <- file.path(pkgdir, "DESCRIPTION")
+    dcf <- read.dcf(desc)
+    if ("biocViews" %in% colnames(dcf))
+        strsplit(dcf[, "biocViews"], "\\s*,\\s*")[[1]]
+    else
+        ""
+}
+
 checkBiocViews <- function(pkgdir)
 {
-    dirty <- FALSE
-    dcf <- read.dcf(file.path(pkgdir, "DESCRIPTION"))
+    invalid <- FALSE
     handleCheck("Checking that biocViews are present...")
-    if (!"biocViews" %in% colnames(dcf))
-    {
+    views <- .parseBiocViews(pkgdir)
+    if (identical(length(views), 1L) && !nzchar(views)) {
         handleError("No biocViews terms found.")
         return(TRUE)
     }
-    biocViews <- dcf[, "biocViews"]
-    views <- strsplit(gsub("\\s*,\\s*", ",", biocViews), ",")[[1]]
-    # views <- gsub("\\s", "", views)
+
     dataenv <- new.env(parent = emptyenv())
     data("biocViewsVocab", package="biocViews", envir=dataenv)
     biocViewsVocab <- dataenv[["biocViewsVocab"]]
+
     handleCheck("Checking package type based on biocViews...")
     type <- guessPackageType(views)
     handleMessage(type)
     handleCheck("Checking for non-trivial biocViews...")
     toplevel <- c("Software", "AnnotationData", "ExperimentData", "Workflow")
-    if (!length(views)) {
-        handleError("No biocViews terms found.")
+    if (all(views %in% toplevel)) {
+        handleError(
+            "Add biocViews other than ",
+            paste(unique(views), collapse=", ")
+        )
         return(TRUE)
-    } else {
-        if (all(views %in% toplevel)) {
-            handleError(
-                "Add biocViews other than ",
-                paste(unique(views), collapse=", ")
-            )
-            return(TRUE)
-        }
     }
 
     parents <-
@@ -338,7 +340,7 @@ checkBiocViews <- function(pkgdir)
         handleWarning(
             "Invalid BiocViews term(s):", messages = unlist(suggestedViews)
         )
-        dirty <- TRUE
+        invalid <- TRUE
     }
 
     if (packageVersion("biocViews") < package_version("1.33.9")) {
@@ -356,15 +358,14 @@ checkBiocViews <- function(pkgdir)
 
     if (!is.null(rec))
     {
-        if (length(rec$recommended) == 1 && !nzchar(rec$recommended)) {
-        } else {
+        if (nzchar(rec$recommended)) {
             handleNote(
                 "Consider adding these automatically suggested biocViews: ",
                 rec$recommended)
-            dirty <- TRUE
+            invalid <- TRUE
         }
     }
-    return(dirty)
+    return(invalid)
 }
 
 .checkDescription <- function(desc) {
