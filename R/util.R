@@ -664,25 +664,18 @@ vigHelper <- function(vignetteFile, builder){
 
 getPkgType <- function(pkgdir)
 {
-    dcf <- read.dcf(file.path(pkgdir, "DESCRIPTION"))
-    if (!"biocViews" %in% colnames(dcf))
-    {
+    views <- .parseBiocViews(pkgdir)
+    if (identical(length(views), 1L) && !nzchar(views))
         return(NA)
-    }
-    biocViews <- dcf[, "biocViews"]
-    views <- strsplit(gsub("\\s", "", biocViews), ",")[[1]]
 
     biocViewsVocab <- .load_data("biocViewsVocab", "biocViews")
 
     if (any(!views %in% nodes(biocViewsVocab)))
         return(NA)
-    parents <- c()
-    for (view in views)
-    {
-        parents <- c(parents, getParent(view, biocViewsVocab))
-    }
+
+    parents <- vapply(views, getParent, character(1L), biocViewsVocab)
     u <- unique(parents)
-    if (length(u)==1) return(u) else return(NA)
+    if (identical(length(u), 1L)) return(u) else return(NA)
 }
 
 getParent <- function(view, biocViewsVocab)
@@ -690,10 +683,14 @@ getParent <- function(view, biocViewsVocab)
     topLevel <- c("Software", "ExperimentData", "AnnotationData", "Workflow")
     if (view %in% topLevel)
         return(view)
+    parent <- ""
     for (level in topLevel) {
-        if (view %in% names(acc(biocViewsVocab, level)[[level]]))
-            return(level)
+        if (view %in% names(acc(biocViewsVocab, level)[[level]])) {
+            parent <- level
+            break
+        }
     }
+    parent
 }
 
 .checkEnv <- function(env, walker) {
