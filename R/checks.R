@@ -377,9 +377,9 @@ checkBiocViews <- function(pkgdir)
         desc_sentences <- length(
             strsplit(desc_field, split = "[.!?][[:space:]]+")[[1L]]
         )
-        msg <- "The Description field in the DESCRIPTION is made up by less
-            than 3 sentences. Please consider expanding this field, and
-            structure it as a full paragraph"
+        msg <- "The Description field in the DESCRIPTION is made up of less
+            than 3 sentences. Provide a more detailed description of the
+            package."
 
         # values chosen sensibly in a data-driven manner
         if (nchar(desc_field) < 50 || desc_words < 20)
