@@ -76,36 +76,36 @@ NULL
 #'
 #' @aliases add,BiocCheck-method
 #'
-#' @param ... character() A vector that makes up the `BiocCheck` exception
+#' @param ... `character()` A vector that makes up the `BiocCheck` exception
 #'   message (e.g., 'Vignette must be built by R CMD build'). The character
 #'   vector is handled with `paste0` and made into a list and appended with
 #'   `help_text` and `messages`.
 #'
-#' @param help_text character(1) Additional text prompting a list of files
+#' @param help_text `character(1)` Additional text prompting a list of files
 #'   (e.g,. "Found in files:")
 #'
-#' @param condition character(1) One of the three conditions handled: `error`,
+#' @param condition `character(1)` One of the three conditions handled: `error`,
 #'   `warning`, or `note`
 #'
-#' @param messages character() Often a vector of file names where the check
+#' @param messages `character()` Often a vector of file names where the check
 #'   was triggered.
 #'
-#' @param verbose logical(1) Whether or not to output both the `help_text` and
+#' @param verbose `logical(1)` Whether or not to output both the `help_text` and
 #'   `messages` as part of the report
 #'
-#' @param debug logical(1) Whether to append the name of the originating check
-#'   name into for traceability
+#' @param debug `logical(1)` Whether to append the name of the originating check
+#'   name into for trace-ability
 #'
-#' @param checkName character(1) The title of the current group of checks. It
-#'   can be set with `handleCheck`, e.g., `handleCheck("Checking for version
-#'   number mismatch...")`. Internally, it is saved with `setCheck` and obtained
-#'   with `getLastCheck`.
+#' @param checkName `character(1)` The title of the current group of checks. It
+#'   can be set with `handleCheck`, e.g.,
+#'   `handleCheck("Checking for version number mismatch...")`. Internally, it
+#''  is saved with `setCheck` and obtained with `getLastCheck`.
 #'
-#' @param isOnBBS logical(1) Indicates whether the checks are being run on the
+#' @param isOnBBS `logical(1)` Indicates whether the checks are being run on the
 #'   Bioconductor Build System (BBS). This is helpful for avoiding the creation
 #'   of folders in the BBS.
 #'
-#' @param file character(1) A path to a JSON file for writing or reading as
+#' @param file `character(1)` A path to a JSON file for writing or reading as
 #'   created by `toJSON` and `fromJSON` `BiocCheck` methods.
 #'
 #' @section methods:
