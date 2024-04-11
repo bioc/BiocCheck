@@ -664,7 +664,7 @@ vigHelper <- function(vignetteFile, builder){
 
 getPkgType <- function(pkgdir)
 {
-    views <- .parseBiocViews(pkgdir)
+    views <- .readBiocViews(pkgdir)
     if (identical(length(views), 1L) && !nzchar(views))
         return(NA)
 

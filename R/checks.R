@@ -260,9 +260,13 @@ checkInstDocFolder <- function(pkgdir, pkg_name) {
         )
 }
 
-.parseBiocViews <- function(pkgdir) {
+.readBiocViews <- function(pkgdir) {
     desc <- file.path(pkgdir, "DESCRIPTION")
     dcf <- read.dcf(desc)
+    .parseBiocViews(dcf)
+}
+
+.parseBiocViews <- function(dcf) {
     if ("biocViews" %in% colnames(dcf))
         strsplit(dcf[, "biocViews"], "\\s*,\\s*")[[1]]
     else
@@ -273,7 +277,7 @@ checkBiocViews <- function(pkgdir)
 {
     invalid <- FALSE
     handleCheck("Checking that biocViews are present...")
-    views <- .parseBiocViews(pkgdir)
+    views <- .readBiocViews(pkgdir)
     if (identical(length(views), 1L) && !nzchar(views)) {
         handleError("No biocViews terms found.")
         return(TRUE)
