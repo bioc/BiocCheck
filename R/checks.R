@@ -2456,7 +2456,7 @@ checkBadFiles <- function(package_dir){
     handleCheck("Checking for Bioconductor software dependencies...")
     which_fields <- dcf[, colnames(dcf) %in% which]
     all_deps <- unlist(
-        lapply(which_fields, function(x) strsplit(x, ",\\s+")[[1L]]),
+        lapply(which_fields, function(x) strsplit(x, ",\\s*")[[1L]]),
         use.names = FALSE
     )
     all_deps <- gsub("(\\w+)\\s+\\(.*\\)$", "\\1", all_deps)
@@ -2465,18 +2465,23 @@ checkBadFiles <- function(package_dir){
     biocdb <- utils::available.packages(repos = repo)
     bioc_deps <- all_deps %in% rownames(biocdb)
     percent <- unname(round(prop.table(table(bioc_deps))["TRUE"], 2L) * 100)
-    if (!any(bioc_deps))
-        handleWarning(
-            "No Bioconductor dependencies detected. ",
-            "Reach out to the Bioconductor community or ",
-            "consider a CRAN submission."
-        )
-    else
+
+    if (!any(bioc_deps)) {
+        views <- .parseBiocViews(dcf)
+        handleFUN <-
+            if ("Infrastructure" %in% views) handleNote else handleWarning
+        msg <- "No Bioconductor dependencies detected. Note that some
+            infrastructure packages may not have Bioconductor dependencies.
+            For more information, reach out to the Bioconductor community
+            and/or consider a CRAN submission."
+        handleFUN(msg)
+    } else {
         handleMessage(
             "Bioconductor dependencies found in Imports & Depends (",
             percent,
             "%)."
         )
+    }
 }
 
 checkDescription <- function(package_dir) {
