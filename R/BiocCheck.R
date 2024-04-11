@@ -217,7 +217,7 @@ BiocCheckRun <-
         if (source_tarball){
             checkPackageSize(package, package_dir, size=5)
         } else {
-            handleMessage("Skipped... only checked on source tarball", indent=6)
+            handleMessage("Skipped... only checked on source tarball", indent=4)
         }
     }
 
