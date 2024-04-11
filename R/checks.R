@@ -279,9 +279,7 @@ checkBiocViews <- function(pkgdir)
         return(TRUE)
     }
 
-    dataenv <- new.env(parent = emptyenv())
-    data("biocViewsVocab", package="biocViews", envir=dataenv)
-    biocViewsVocab <- dataenv[["biocViewsVocab"]]
+    biocViewsVocab <- .load_data("biocViewsVocab", "biocViews")
 
     handleCheck("Checking package type based on biocViews...")
     type <- guessPackageType(views)

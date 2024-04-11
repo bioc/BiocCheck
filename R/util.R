@@ -656,6 +656,12 @@ vigHelper <- function(vignetteFile, builder){
     }
 }
 
+.load_data <- function(dataname, package) {
+    env <- new.env(parent = emptyenv())
+    data(list = dataname, package = package, envir = env)
+    env[[dataname]]
+}
+
 getPkgType <- function(pkgdir)
 {
     dcf <- read.dcf(file.path(pkgdir, "DESCRIPTION"))
@@ -665,8 +671,9 @@ getPkgType <- function(pkgdir)
     }
     biocViews <- dcf[, "biocViews"]
     views <- strsplit(gsub("\\s", "", biocViews), ",")[[1]]
-    biocViewsVocab <- NULL ## to keep R CMD check happy
-    data("biocViewsVocab", package="biocViews", envir=environment())
+
+    biocViewsVocab <- .load_data("biocViewsVocab", "biocViews")
+
     if (any(!views %in% nodes(biocViewsVocab)))
         return(NA)
     parents <- c()
