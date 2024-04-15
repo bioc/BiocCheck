@@ -299,6 +299,7 @@ checkBiocViews <- function(pkgdir)
     }
 
     parents <- vapply(views, getParent, character(1L), biocViewsVocab)
+    parents <- Filter(nzchar, parents)
 
     handleCheck("Checking that biocViews come from the same category...")
     if (length(unique(parents)) > 1)
