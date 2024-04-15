@@ -352,20 +352,16 @@ checkBiocViews <- function(pkgdir)
     }
 
     handleCheck("Checking for recommended biocViews...")
-    rec <- tryCatch(suppressMessages(suppressWarnings({
-        recommendBiocViews(pkgdir, branch)
-    })), error=function(e) {
-        NULL
-    })
+    recommended <- try({
+        recommendBiocViews(pkgdir, branch)[["recommended"]]
+    }, silent = TRUE)
 
-    if (!is.null(rec))
+    if (!inherits(recommended, "try-error") && nzchar(recommended))
     {
-        if (nzchar(rec$recommended)) {
-            handleNote(
-                "Consider adding these automatically suggested biocViews: ",
-                rec$recommended)
-            invalid <- TRUE
-        }
+        handleNote(
+            "Consider adding these automatically suggested biocViews: ",
+            recommended)
+        invalid <- TRUE
     }
     return(invalid)
 }
