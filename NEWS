@@ -9,9 +9,18 @@ NEW FEATURES
     o Add error when maintainer email not parse-able in DESCRIPTION
     o Check for Bioconductor dependencies in the Imports and Depends fields;
     if none, produce a warning (@vjcitn).
+    o Remove redundant `DESCRIPTION` and `NAMESPACE` consistency checks; these
+    are already included in `R CMD check`
 
 BUG FIXES AND MINOR IMPROVEMENTS
 
+    o Produce `NOTE` instead of `WARNING` for infrastructure packages without
+    Bioconductor dependencies
+    o `% \VignetteEngine` tags with spaces were not recognized; this has been
+    fixed
+    o Skip `\value` checks for package and class documentation; `\formats`
+    checked for data documentation
+    o Delegate system calls to `devtools::build` to build packages
     o Update `checkRbuildignore` to flag `test` and `longtests` entries
     appropriately (@hpages, #197)
     o Fix issue where BiocCheck would fail when errors caused by duplicate chunk
@@ -19,7 +28,7 @@ BUG FIXES AND MINOR IMPROVEMENTS
     o Avoid format checks e.g., length, indentation, and tabs for Rd files
     that use roxygen2
     o Use the `tools:::analyze_licenses` function to check for restrictive
-    license use (@hpages, #119)    
+    license use (@hpages, #119)
     o Use httr2 over httr for http requests
     o Clarify `NOTE` and `WARNING` messages for `CITATION` file inclusion
     (#209).
