@@ -533,14 +533,6 @@ checkBBScompatibility <- function(pkgdir, source_tarball)
     }
 }
 
-.parsePackageImportsFromNamespace <- function(pkg, libloc) {
-    importFields <- c("imports", "importClasses", "importMethods")
-    imps <- parseNamespaceFile(pkg, libloc)[importFields]
-    for (i in names(imps))
-        imps[[i]] <- vapply(imps[[i]], `[[`, character(1L), 1L)
-    unique(unlist(imps))
-}
-
 checkVignetteDir <- function(pkgdir, checkingDir)
 {
     vigdir <- file.path(pkgdir, "vignettes")
