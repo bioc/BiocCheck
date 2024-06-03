@@ -210,10 +210,9 @@ BiocCheckRun <-
         checkRVersionDependency(package_dir)
     }
 
-    source_tarball <- grepl("\\.tar\\.gz$", package)
     if (is.null(dots[["no-check-pkg-size"]])){
         handleCheck("Checking package size...")
-        if (source_tarball){
+        if (isTar){
             checkPackageSize(package, package_dir, size=5)
         } else {
             handleMessage("Skipped... only checked on source tarball", indent=4)
@@ -238,7 +237,7 @@ BiocCheckRun <-
 
     if (is.null(dots[["no-check-bbs"]])){
         handleCheck("Checking build system compatibility...")
-        checkBBScompatibility(package_dir, source_tarball)
+        checkBBScompatibility(package_dir, isTar)
     }
 
     if (is.null(dots[["no-check-description"]])) {

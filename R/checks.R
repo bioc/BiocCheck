@@ -395,7 +395,7 @@ checkBiocViews <- function(pkgdir)
 }
 
 
-checkBBScompatibility <- function(pkgdir, source_tarball)
+checkBBScompatibility <- function(pkgdir, isTar)
 {
     lines <- readLines(file.path(pkgdir, "DESCRIPTION"), warn=FALSE)
     desc <- file.path(pkgdir, "DESCRIPTION")
@@ -441,7 +441,7 @@ checkBBScompatibility <- function(pkgdir, source_tarball)
         return()
     }
     handleCheck("Checking for valid maintainer...")
-    if (!source_tarball){
+    if (!isTar){
         if (("Authors@R" %in% colnames(dcf)) & any((c("Author","Maintainer") %in% colnames(dcf)))){
             handleError(
                 "Use only the Authors@R field not Author/Maintainer fields."
