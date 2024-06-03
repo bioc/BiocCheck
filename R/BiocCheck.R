@@ -149,7 +149,7 @@ BiocCheckRun <-
     on.exit(options(warn=oldwarn))
     options(warn=1)
 
-    isTar <- grepl("\\.tar\\.gz$", package)
+    isTar <- grepl("\\.tar\\.[gx]z$", package)
     isSourceDir <- !isTar && file.info(package)[["isdir"]]
 
     package_dir <- .getPackageDir(package, isTar)
