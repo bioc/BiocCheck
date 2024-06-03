@@ -150,7 +150,8 @@ BiocCheckRun <-
     options(warn=1)
 
     isTar <- grepl("\\.tar\\.gz$", package)
-    checkingDir <- !isTar && file.info(package)[["isdir"]]
+    isSourceDir <- !isTar && file.info(package)[["isdir"]]
+
     package_dir <- .getPackageDir(package, isTar)
     package_name <- .getPackageName(package)
     package_install_dir <- installAndLoad(package)
@@ -191,7 +192,7 @@ BiocCheckRun <-
 
     if (is.null(dots[["no-check-version-num"]])){
         handleCheck("Checking version number...")
-        if (!checkingDir) {
+        if (!isSourceDir) {
             handleCheck("Checking for version number mismatch...")
             checkForVersionNumberMismatch(package, package_dir)
         }
@@ -260,7 +261,7 @@ BiocCheckRun <-
 
     if (is.null(dots[["no-check-vignettes"]])) {
         handleCheck("Checking vignette directory...")
-        checkVignetteDir(package_dir, checkingDir)
+        checkVignetteDir(package_dir, isSourceDir)
         if ("build-output-file" %in% names(dots)) {
             handleCheck(
                 "Checking whether vignette is built with 'R CMD build'..."

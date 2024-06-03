@@ -533,7 +533,7 @@ checkBBScompatibility <- function(pkgdir, source_tarball)
     }
 }
 
-checkVignetteDir <- function(pkgdir, checkingDir)
+checkVignetteDir <- function(pkgdir, isSourceDir)
 {
     vigdir <- file.path(pkgdir, "vignettes")
 
@@ -549,7 +549,7 @@ checkVignetteDir <- function(pkgdir, checkingDir)
         return()
     }
 
-    checkInstContents(pkgdir, checkingDir)
+    checkInstContents(pkgdir, isSourceDir)
 
     checkVigFiles(vigdir, vigdircontents)
 
@@ -589,11 +589,11 @@ checkVignetteDir <- function(pkgdir, checkingDir)
 
 checkVigDirExists <- function(vigdir) { dir.exists(vigdir) }
 
-checkInstContents <- function(pkgdir, checkingDir)
+checkInstContents <- function(pkgdir, isSourceDir)
 {
     instdocdir <- file.path(pkgdir, "inst", "doc")
     instdocdircontents <- getVigSources(instdocdir)
-    if (length(instdocdircontents) && checkingDir)
+    if (length(instdocdircontents) && isSourceDir)
         handleWarning(
             "Remove vignette sources from inst/doc; ",
             "they belong in vignettes/."
