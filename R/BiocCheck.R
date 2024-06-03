@@ -128,15 +128,14 @@ BiocCheck <- function(
     }
 }
 
+#' @importFrom BiocBaseUtils isScalarCharacter
 BiocCheckRun <-
     function(package, checkDir, debug, ...)
 {
     .zeroCounters()
     package <- normalizePath(package)
-    if (!file.exists(package))
-        .stop("Package directory or tarball does not exist.")
-    if (!length(package))
-        .stop("Supply a package directory or source tarball.")
+    if (!file.exists(package) || !isScalarCharacter(package))
+        .stop("Package directory or tarball provided does not exist.")
     # be careful here:
     if (identical(.Platform$OS.type, "windows"))
         package <- gsub("\\\\", "/", package)
