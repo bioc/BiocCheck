@@ -187,19 +187,6 @@ cleanupDependency <- function(input, remove.R=TRUE)
     res
 }
 
-getAllDependencies <- function(pkgdir)
-{
-    dcf <- read.dcf(file.path(pkgdir, "DESCRIPTION"))
-    fields <- c("Depends", "Imports", "Suggests", "Enhances", "LinkingTo")
-    out <- c()
-    for (field in fields)
-    {
-        if (field %in% colnames(dcf))
-            out <- append(out, cleanupDependency(dcf[, field]))
-    }
-    out
-}
-
 get_deprecated_status_db_url <- function(version) {
     sprintf(
         "https://bioconductor.org/checkResults/%s/bioc-LATEST/meat-index.dcf",
@@ -452,62 +439,11 @@ findSymbolsInParsedCode <-
     })
 }
 
-isInfrastructurePackage <- function(pkgDir)
-{
-    if (!file.exists(file.path(pkgDir, "DESCRIPTION")))
-        return(FALSE)
-    dcf <- read.dcf(file.path(pkgDir, "DESCRIPTION"))
-    if (!"biocViews" %in% colnames(dcf))
-    {
-        return(FALSE)
-    }
-    biocViews <- dcf[, "biocViews"]
-    views <- strsplit(gsub("\\s", "", biocViews), ",")[[1]]
-    "Infrastructure" %in% views
-}
-
-getMaintainerEmail <- function(pkgdir)
-{
-    # Eventually update this to just look at Authors@R
-    # Since the intention is to possible start running
-    # this on the daily builder, leave Maintainer field
-    # check. This is used to check for mailing list registration
-
-    dcf <- read.dcf(file.path(pkgdir, "DESCRIPTION"))
-    if ("Maintainer" %in% colnames(dcf))
-    {
-        m <- unname(dcf[, "Maintainer"])
-        ret <- regexec("<([^>]*)>", m)[[1]]
-        ml <- attr(ret, "match.length")
-        email <- substr(m, ret[2], ret[2]+ml[2]-1)
-    } else if ("Authors@R" %in% colnames(dcf)) {
-        ar <- dcf[, "Authors@R"]
-        env <- new.env(parent=emptyenv())
-        env[["c"]] <- c
-        env[["person"]] <- utils::person
-        pp <- parse(text=ar, keep.source=TRUE)
-        tryCatch(people <- eval(pp, env),
-            error=function(e) {
-                # could not parse Authors@R
-                return(NULL)
-            })
-        for (person in people)
-        {
-            if ("cre" %in% person$role)
-            {
-                email <- person$email
-            }
-        }
-    }
-    return(email)
-}
-
 docType <- function(rd, tags) {
     if (missing(tags))
         tags <- tools:::RdTags(rd)
     .tagsExtract(rd, tags, "\\docType")
 }
-
 
 findLogicalFile <- function(fl) {
     env <- new.env()
@@ -626,10 +562,13 @@ getBadDeps <- function(pkgdir, lib.loc)
         env="R_DEFAULT_PACKAGES=NULL")
 }
 
-getVigBuilder <- function(desc)
+getVigBuilder <- function(pkgdir)
 {
-    if (file.exists(desc))
-        builder <- read.dcf(desc, fields = "VignetteBuilder")
+    dcf <- .BiocCheck$DESCRIPTION
+    if (!length(dcf))
+        dcf <- .readDESCRIPTION(pkgdir)
+    if (length(dcf))
+        builder <- dcf[, "VignetteBuilder"]
     else
         builder <- NA
     if (is.na(builder)) NULL else unlist(strsplit(builder, ",\\s+"))
@@ -664,7 +603,7 @@ vigHelper <- function(vignetteFile, builder){
 
 getPkgType <- function(pkgdir)
 {
-    views <- .readBiocViews(pkgdir)
+    views <- .parseBiocViews(pkgdir)
     if (identical(length(views), 1L) && !nzchar(views))
         return(NA)
 

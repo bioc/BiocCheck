@@ -97,8 +97,6 @@
 #' @references \url{https://contributions.bioconductor.org}
 #' @seealso \link{BiocCheck-class}, \link{Message-class}
 #'
-#' @importFrom utils untar
-#'
 #' @examples
 #'
 #' packageDir <- system.file("testpackages", "testpkg0", package="BiocCheck")
@@ -148,32 +146,22 @@ BiocCheckRun <-
     on.exit(options(warn=oldwarn))
     options(warn=1)
 
-    isTar <- grepl("\\.tar\\.[gx]z$", package)
-    isSourceDir <- !isTar && file.info(package)[["isdir"]]
+    .BiocPackage <- .BiocPackage(packageDir = package, checkDir = checkDir)
+    isSourceDir <- !.BiocPackage$isTar && file.info(package)[["isdir"]]
 
-    package_dir <- .getPackageDir(package, isTar)
-    package_name <- .getPackageName(package)
+    ## consider merging these operations into one
+    handleMessage("* Installing package...", indent = 0, exdent = 0)
+
     package_install_dir <- installAndLoad(package)
     libloc <- file.path(package_install_dir, "lib")
-    pkgver <- .getPackageVersion(package_dir)
-    bioccheckver <- as.character(packageVersion("BiocCheck"))
-    biocver <- as.character(BiocManager::version())
-    checkDir <- .getBiocCheckDir(package_name, checkDir)
     isBBS <- Sys.getenv("IS_BIOC_BUILD_MACHINE")
     onBBS <- nzchar(isBBS) && identical(tolower(isBBS), "true")
     hasAdmin <- nzchar(Sys.getenv("BIOC_DEVEL_PASSWORD"))
 
-    .BiocCheck$metadata <- list(
-        BiocCheckVersion = bioccheckver,
-        BiocVersion = biocver,
-        Package = package_name, PackageVersion = pkgver,
-        sourceDir = package_dir, installDir = package_install_dir,
-        BiocCheckDir = checkDir,
-        platform = .Platform$OS.type, isTarBall = isTar
+    .BiocCheck$addMetadata(
+        BiocPackage = .BiocPackage, installDir = package_install_dir
     )
     .BiocCheck$show_meta()
-
-    handleMessage("* Installing package...", indent = 0, exdent = 0)
 
     # BiocCheck checks --------------------------------------------------------
     if (is.null(dots[["no-check-deprecated"]])){
@@ -183,7 +171,7 @@ BiocCheckRun <-
 
     if (is.null(dots[["no-check-remotes"]])){
         handleCheck("Checking for remote package usage...")
-        checkRemotesUsage(package_dir)
+        checkRemotesUsage()
     }
 
     handleCheck("Checking for 'LazyData: true' usage...")
@@ -241,8 +229,6 @@ BiocCheckRun <-
     }
 
     if (is.null(dots[["no-check-description"]])) {
-        ## the following is redundant with other outputs...
-        ## handleCheck("Checking DESCRIPTION file...")
         checkDESCRIPTIONFile(package_dir)
     }
 
@@ -377,24 +363,20 @@ BiocCheckRun <-
 
 }
 
-# input can either be tarball or pkg source dir
-.getPackageName <- function(input)
+.getPackageName <- function(pkgpath)
 {
-    isTar <- grepl("\\.tar\\.gz$", input)
-    if (isTar) {
-        tmp_pkg_dir <- .tempPackageDirTarball(input)
-        on.exit({
-            unlink(dirname(tmp_pkg_dir), recursive = TRUE)
-        })
-        desc <- file.path(tmp_pkg_dir, "DESCRIPTION")
-        if (!file.exists(desc))
-            .stop("The package folder is inconsistent with the tarball name.")
-    } else {
-        desc <- file.path(input, "DESCRIPTION")
-    }
-    read.dcf(desc, fields = "Package")[[1]]
+    desc <- .BiocCheck$DESCRIPTION
+    if (any(endsWith(pkgpath, c(".tar.gz", ".tar.xz"))))
+        desc <- matrix(
+            gsub("(\\w+)_.*", "\\1", basename(pkgpath)),
+            nrow = 1, dimnames = list(NULL, "Package")
+        )
+    if (!length(desc) || file.info(pkgpath)[["isdir"]])
+        desc <- .readDESCRIPTION(pkgpath)
+    (.BiocCheck$package_name <- unname(desc[, "Package"]))
 }
 
+#' @importFrom utils untar
 .tempPackageDirTarball <- function(pkg_tarball)
 {
     tmp_dir <- tempfile()
@@ -405,7 +387,10 @@ BiocCheckRun <-
         untar(pkg_tarball, exdir = tmp_dir)
     })
     # pkg_name must match with tarred folder
-    file.path(tmp_dir, pkg_name)
+    if (!length(.BiocCheck$package_dir))
+        (.BiocCheck$package_dir <- file.path(tmp_dir, pkg_name))
+    else
+        .BiocCheck$package_dir
 }
 
 .getPackageDir <- function(input, isTar) {
@@ -413,7 +398,7 @@ BiocCheckRun <-
         .tempPackageDirTarball(input)
     } else {
         if (file.info(input)[["isdir"]])
-            input
+            (.BiocCheck$package_dir <- input)
         else
             .stop("'%s' is not a directory or package source tarball.", input)
     }
@@ -427,6 +412,9 @@ BiocCheckRun <-
 }
 
 .getPackageVersion <- function(pkgdir) {
+    desc <- .BiocCheck$DESCRIPTION
+    if (!missing(pkgdir))
+        desc <- .readDESCRIPTION(pkgdir)
     desc <- file.path(pkgdir, "DESCRIPTION")
     as.character(read.dcf(desc, fields = "Version"))
 }

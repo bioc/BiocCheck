@@ -2,6 +2,7 @@ UNIT_TEST_PKG <- "unitTestTempDir"
 UNIT_TEST_TEMPDIR <- file.path(tempdir(), UNIT_TEST_PKG)
 
 library(devtools)
+library(RUnit)
 
 .zeroCounters <- BiocCheck:::.zeroCounters
 
@@ -274,6 +275,9 @@ test_vignettes0 <- function()
 
 test_checkVersionNumber <- function()
 {
+    pkgdir <- UNIT_TEST_TEMPDIR
+    if (!dir.exists(pkgdir))
+        dir.create(pkgdir)
     setVersion("lkjgfhfdlkgjhdflkgj")
     BiocCheck:::checkVersionNumber(UNIT_TEST_TEMPDIR)
     checkError("Garbage version doesn't cause error!")
@@ -418,23 +422,23 @@ test_badFiles <- function(){
 
 test_checkLicenseForRestrictiveUse <- function() {
     .zeroCounters()
-    BiocCheck:::.checkLicenseForRestrictiveUse("GPL-3.0")
+    BiocCheck:::checkLicenseForRestrictiveUse("GPL-3.0")
     stillZero()
 
     .zeroCounters()
-    BiocCheck:::.checkLicenseForRestrictiveUse("CC BY-NC-ND 4.0")
+    BiocCheck:::checkLicenseForRestrictiveUse("CC BY-NC-ND 4.0")
     checkEqualsNumeric(1, .BiocCheck$getNum("error"))
 
     .zeroCounters()
-    BiocCheck:::.checkLicenseForRestrictiveUse("CC BY-NC-ND 4.0 + file LICENSE")
+    BiocCheck:::checkLicenseForRestrictiveUse("CC BY-NC-ND 4.0 + file LICENSE")
     checkEqualsNumeric(1, .BiocCheck$getNum("error"))
 
     .zeroCounters()
-    BiocCheck:::.checkLicenseForRestrictiveUse("UNKNOWN")
+    BiocCheck:::checkLicenseForRestrictiveUse("UNKNOWN")
     checkEqualsNumeric(1, .BiocCheck$getNum("note"))
 
     .zeroCounters()
-    BiocCheck:::.checkLicenseForRestrictiveUse(NA_character_)
+    BiocCheck:::checkLicenseForRestrictiveUse(NA_character_)
     checkEqualsNumeric(1, .BiocCheck$getNum("note"))
 }
 
@@ -445,13 +449,13 @@ test_analyze_licenses <- function() {
     )
     result <- tools:::analyze_licenses("GPL-3.0", licensedb)
     checkTrue(!result$is_verified)
-    BiocCheck:::.checkLicenseForRestrictiveUse("GPL-3.0")
+    BiocCheck:::checkLicenseForRestrictiveUse("GPL-3.0")
     checkEqualsNumeric(1, .BiocCheck$getNum("note"))
     .zeroCounters()
 
     result <- tools:::analyze_licenses("GPL-3", licensedb)
     checkTrue(result$is_verified)
-    BiocCheck:::.checkLicenseForRestrictiveUse("GPL-3")
+    BiocCheck:::checkLicenseForRestrictiveUse("GPL-3")
     checkEqualsNumeric(0, .BiocCheck$getNum("note"))
 }
 
@@ -974,12 +978,12 @@ test_checkClassNEEQLookup <- function()
 test_checkDESCRIPTIONfile <- function()
 {
     dcf <- matrix("https://example.com", dimnames = list(NULL, "URL"))
-    BiocCheck:::.checkDESCfields(dcf)
+    BiocCheck:::checkDESCfields(dcf)
     checkEqualsNumeric(.BiocCheck$getNum("note"), 1)
     .zeroCounters()
 
     dcf <- matrix("https://example.com", dimnames = list(NULL, "BugReports"))
-    BiocCheck:::.checkDESCfields(dcf)
+    BiocCheck:::checkDESCfields(dcf)
     checkEqualsNumeric(.BiocCheck$getNum("note"), 1)
     .zeroCounters()
 
@@ -987,7 +991,7 @@ test_checkDESCRIPTIONfile <- function()
         c("https://example.com", "https://example.com"), nrow = 1,
         dimnames = list(NULL, c("BugReports", "URL"))
     )
-    BiocCheck:::.checkDESCfields(dcf)
+    BiocCheck:::checkDESCfields(dcf)
     checkEqualsNumeric(.BiocCheck$getNum("note"), 0)
     .zeroCounters()
 
@@ -995,7 +999,7 @@ test_checkDESCRIPTIONfile <- function()
         c("https://example.com", "https://example.com"), nrow = 1,
         dimnames = list(NULL, c("BugReports", "URL"))
     )
-    BiocCheck:::.checkBiocDepsDESC(dcf)
+    BiocCheck:::checkBiocDepsDESC(dcf)
     checkEqualsNumeric(.BiocCheck$getNum("warning"), 1)
     .zeroCounters()
 
@@ -1003,7 +1007,7 @@ test_checkDESCRIPTIONfile <- function()
         "S4Vectors (== 0.99.0)", nrow = 1,
         dimnames = list(NULL, "Depends")
     )
-    BiocCheck:::.checkBiocDepsDESC(dcf)
+    BiocCheck:::checkBiocDepsDESC(dcf)
     checkEqualsNumeric(.BiocCheck$getNum("warning"), 0)
     .zeroCounters()
 
@@ -1011,7 +1015,7 @@ test_checkDESCRIPTIONfile <- function()
         "S4Vectors (== 0.99.0)", nrow = 1,
         dimnames = list(NULL, "Depends")
     )
-    BiocCheck:::.checkPinnedDeps(dcf)
+    BiocCheck:::checkPinnedDeps(dcf)
     checkEqualsNumeric(.BiocCheck$getNum("error"), 1)
     .zeroCounters()
 }
@@ -1122,8 +1126,8 @@ test_checkNEWS <- function()
 
 test_checkFormatting <- function()
 {
-    BiocCheck:::checkFormatting(system.file("testpackages", "testpkg0",
-        package="BiocCheck"))
+    pkgdir <- system.file("testpackages", "testpkg0", package="BiocCheck")
+    BiocCheck:::checkFormatting(pkgdir)
     checkEqualsNumeric(3, .BiocCheck$getNum("note"))
 }
 
@@ -1186,7 +1190,7 @@ test_checkForBiocDevelSubscription <- function()
         checkTrue(stillZero())
         .zeroCounters()
 
-        result_email <- BiocCheck:::getMaintainerEmail(UNIT_TEST_TEMPDIR)
+        result_email <- BiocCheck:::getMaintainerEmail()
         checkTrue(
             identical(result_email, "MAINTAINER@bioconductor.ORG")
         )
@@ -1200,7 +1204,7 @@ test_checkForBiocDevelSubscription <- function()
                 "  role = c('aut', 'cre'))"
             )
         ), con = file.path(UNIT_TEST_TEMPDIR, "DESCRIPTION"))
-        result_email <- BiocCheck:::getMaintainerEmail(UNIT_TEST_TEMPDIR)
+        result_email <- BiocCheck:::getMaintainerEmail()
         checkTrue(
             identical(result_email, "Maintainer@bioconductor.org")
         )
@@ -1300,7 +1304,8 @@ test_checkForVersionNumberMismatch <- function()
 
     BiocCheck:::checkForVersionNumberMismatch(
         newname,
-        BiocCheck:::.tempPackageDirTarball(newname))
+        BiocCheck:::.tempPackageDirTarball(newname)
+    )
     checkEqualsNumeric(.BiocCheck$getNum("error"), 1)
     .zeroCounters()
 }

@@ -67,7 +67,7 @@ BiocCheckGitClone <- function(package=".", ...)
     options(warn=1)
 
     package_dir <- .getPackageDir(package, isTar)
-    package_name <- .getPackageName(package)
+    package_name <- .getPackageName(package_dir)
     pkgver <- .getPackageVersion(package_dir)
     bioccheckver <- as.character(packageVersion("BiocCheck"))
     biocver <- as.character(BiocManager::version())
@@ -88,12 +88,13 @@ BiocCheckGitClone <- function(package=".", ...)
 
     handleCheck("Checking for stray BiocCheck output folders...")
     checkBiocCheckOutputFolder(package_dir, package_name)
-    
+
     handleCheck("Checking for inst/doc folders...")
     checkInstDocFolder(package_dir, package_name)
 
     handleCheck("Checking DESCRIPTION...")
-    checkDescription(package)
+    .checkDESCRIPTION(package_dir)
+    validMaintainer()
 
     handleCheck("Checking CITATION...")
     checkForCitationFile(package)

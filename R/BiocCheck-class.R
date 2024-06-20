@@ -148,6 +148,10 @@ NULL
         error = "list",
         warning = "list",
         note = "list",
+        validDESC = "logical",
+        DESCRIPTION = "matrix",
+        package_dir = "character",
+        package_name = "character",
         metadata = "list",
         verbose = "logical"
     ),
@@ -175,6 +179,21 @@ NULL
             .messages$setMessage(nist, verbose = verbose, condition = condition)
             .self[[condition]] <- append(.self[[condition]], nist)
             .self$log[[checkName]] <- append(.self$log[[checkName]], nist)
+        },
+        addMetadata = function(BiocPackage, ...) {
+            args <- list(...)
+            .self$metadata <- list(
+                sourceDir = BiocPackage$sourceDir,
+                BiocVersion = as.character(BiocManager::version()),
+                Package = BiocPackage$packageName,
+                PackageVersion = BiocPackage$packageVersion,
+                BiocCheckDir = BiocPackage$BiocCheckDir,
+                BiocCheckVersion = as.character(packageVersion("BiocCheck")),
+                sourceDir = BiocPackage$sourceDir,
+                installDir = args[["installDir"]],
+                isTarBall = BiocPackage$isTar,
+                platform = .Platform$OS.type
+            )
         },
         getLastCheck = function() {
             checkName <- .self$check
@@ -204,7 +223,7 @@ NULL
                 cond
             }
         },
-        getNum = function(conditions) {
+        getNum = function(conditions = c("error", "warning", "note")) {
             vapply(
                 conditions,
                 function(condition) {
@@ -213,9 +232,9 @@ NULL
                 integer(1L)
             )
         },
-        zero = function(conditions) {
-            for (cond in conditions) {
-                .self[[cond]] <- list()
+        zero = function(conditions = c("error", "warning", "note")) {
+            for (condition in conditions) {
+                .self[[condition]] <- list()
             }
         },
         getBiocCheckDir = function() {
@@ -236,7 +255,7 @@ NULL
         report = function(debug, isOnBBS) {
             if (isOnBBS)
                 return()
-            bioccheck_dir <- getBiocCheckDir()
+            bioccheck_dir <- .self$getBiocCheckDir()
             outputs <- .self$composeReport(debug = debug)
             writeLines(
                 outputs, con = file.path(bioccheck_dir, "00BiocCheck.log")

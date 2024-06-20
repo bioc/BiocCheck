@@ -8,21 +8,6 @@
 
 # Checks for BiocCheck ----------------------------------------------------
 
-checkForVersionNumberMismatch <- function(package, package_dir)
-{
-    bn <- basename(package)
-    bn <- sub(".tar.gz", "", bn, TRUE)
-    ver <- strsplit(bn, "_")[[1]][2]
-    dcf <- read.dcf(file.path(package_dir, "DESCRIPTION"))
-    dcfVer <- unname(dcf[, "Version"])
-    if (!ver == dcfVer)
-    {
-        handleError(
-            "Version number in tarball filename must match Version field ",
-            "in DESCRIPTION. (Tip: create tarball with R CMD build)")
-    }
-}
-
 checkDeprecatedPackages <- function(pkgdir)
 {
     allDepends <- getAllDependencies(pkgdir)
@@ -40,103 +25,6 @@ checkDeprecatedPackages <- function(pkgdir)
             "Update your package to not rely on the following:",
             messages = allDeprecated[logVec]
         )
-    }
-}
-
-checkRemotesUsage <- function(pkgdir)
-{
-    dcf <- read.dcf(file.path(pkgdir, "DESCRIPTION"))
-    if ("Remotes" %in% colnames(dcf))
-        handleError(
-            "Package dependencies must be on CRAN or Bioconductor.",
-            " Remove 'Remotes:' from DESCRIPTION"
-        )
-}
-
-checkLazyDataUsage <- function(pkgdir)
-{
-    dcf <- read.dcf(file.path(pkgdir, "DESCRIPTION"))
-    if ("LazyData" %in% colnames(dcf) &&
-        tools:::str_parse_logic(dcf[, "LazyData"]))
-        handleNote(
-            "'LazyData:' in the 'DESCRIPTION' should be set to false or removed"
-        )
-}
-
-checkNewPackageVersionNumber <- function(pkgdir)
-{
-    dcf <- read.dcf(file.path(pkgdir, "DESCRIPTION"))
-    version <- dcf[, "Version"]
-        if (!grepl("^0+[-.][0-9]+[-.][0-9]+$", version))
-            handleWarning(
-                "New package x version starting with non-zero value ",
-                "(e.g., 1.y.z, 2.y.z); got ", sQuote(version), ".")
-        if(!grepl("^[0-9]+[-.]99[-.][0-9]+$", version))
-            handleError(
-                "New package 'y' version not 99 (i.e., x.99.z)",
-                "; Package version: ", version
-            )
-}
-
-checkVersionNumber <- function(pkgdir)
-{
-    dcf <- read.dcf(file.path(pkgdir, "DESCRIPTION"))
-    version <- dcf[, "Version"]
-    regex <- "^[0-9]+[-\\.]([0-9]+)[-\\.][0-9]+$"
-    if(!grepl(regex, version))
-    {
-        handleError(
-            "Invalid package Version, see ",
-            "https://contributions.bioconductor.org/versionnum.html"
-        )
-        return()
-    }
-    tryCatch({
-        pv <- package_version(version)
-        x <- pv$major
-        y <- pv$minor
-        mod <- y %% 2
-        isDevel <- identical(
-            BiocManager:::.version_bioc("devel"), BiocManager::version()
-        )
-        bioc.mod <- ifelse(isDevel, 1, 0)
-        if (x == 0) {
-            handleMessage("Package version ", as.character(pv), "; pre-release")
-        } else if (mod != bioc.mod) {
-            shouldBe <- ifelse(isDevel, "odd", "even")
-            vers <- ifelse(isDevel, "devel", "release")
-            handleWarning(
-                "y of x.y.z version should be ", shouldBe, " in ", vers)
-        }
-
-    }, error = function(e) {
-        handleError("Invalid package version")
-    })
-}
-
-checkRVersionDependency <- function(package_dir) {
-    desc <- file.path(package_dir, "DESCRIPTION")
-    dcf <- read.dcf(desc)
-    if ("Depends" %in% colnames(dcf))
-    {
-        res <- cleanupDependency(dcf[, "Depends"], FALSE)
-        if ("R" %in% res)
-        {
-            ind <- which(res == "R")
-            verStr <- names(res)[ind]
-            if (nchar(verStr))
-            {
-                pkgVer <- as.package_version(verStr)
-                RVer <- package_version(
-                    paste0(getRversion()[, c(1, 2)], ".0")
-                )
-                if (pkgVer < RVer)
-                    handleNote(sprintf(
-                        "Update R version dependency from %s to %s.",
-                        pkgVer, RVer
-                    ))
-            }
-        }
     }
 }
 
@@ -260,13 +148,11 @@ checkInstDocFolder <- function(pkgdir, pkg_name) {
         )
 }
 
-.readBiocViews <- function(pkgdir) {
-    desc <- file.path(pkgdir, "DESCRIPTION")
-    dcf <- read.dcf(desc)
-    .parseBiocViews(dcf)
-}
-
-.parseBiocViews <- function(dcf) {
+.parseBiocViews <- function(pkgdir, dcf) {
+    if (missing(dcf))
+        dcf <- .BiocCheck$DESCRIPTION
+    if (!length(dcf))
+        dcf <- .readDESCRIPTION(pkgdir)
     if ("biocViews" %in% colnames(dcf))
         strsplit(dcf[, "biocViews"], "\\s*,\\s*")[[1]]
     else
@@ -277,7 +163,7 @@ checkBiocViews <- function(pkgdir)
 {
     invalid <- FALSE
     handleCheck("Checking that biocViews are present...")
-    views <- .readBiocViews(pkgdir)
+    views <- .parseBiocViews(pkgdir)
     if (identical(length(views), 1L) && !nzchar(views)) {
         handleError("No biocViews terms found.")
         return(TRUE)
@@ -366,8 +252,7 @@ checkBiocViews <- function(pkgdir)
     return(invalid)
 }
 
-.checkDescription <- function(desc) {
-    dcf <- read.dcf(desc)
+.checkDescription <- function(dcf) {
     if ("Description" %in% colnames(dcf)) {
         desc_field <- dcf[, "Description"]
         desc_words <- lengths(strsplit(desc_field, split = "[[:space:]]+"))
@@ -397,25 +282,10 @@ checkBiocViews <- function(pkgdir)
 
 checkBBScompatibility <- function(pkgdir, isTar)
 {
-    lines <- readLines(file.path(pkgdir, "DESCRIPTION"), warn=FALSE)
-    desc <- file.path(pkgdir, "DESCRIPTION")
-    handleCheck("Checking for blank lines in DESCRIPTION...")
-    if (any(nchar(lines)==0))
-    {
-        handleError("Remove blank lines from DESCRIPTION.")
-        return()
-    }
-    handleCheck("Checking if DESCRIPTION is well formatted...")
-    dcf <- tryCatch({
-        read.dcf(desc)
-    }, error = function(err) {
-        handleError("DESCRIPTION is malformed.")
-        handleMessage(conditionMessage(err))
-        return()
-    })
+    dcf <- .BiocCheck$DESCRIPTION
 
     handleCheck("Checking for proper Description: field...")
-    .checkDescription(desc)
+    .checkDescription(dcf)
 
     handleCheck("Checking for whitespace in DESCRIPTION field names...")
     if (any(grepl("\\s", colnames(dcf))))
@@ -440,17 +310,7 @@ checkBBScompatibility <- function(pkgdir, isTar)
         handleError("No 'Version:' field in DESCRIPTION.")
         return()
     }
-    handleCheck("Checking for valid maintainer...")
-    if (!isTar){
-        if (("Authors@R" %in% colnames(dcf)) & any((c("Author","Maintainer") %in% colnames(dcf)))){
-            handleError(
-                "Use only the Authors@R field not Author/Maintainer fields."
-            )
-        } else {
-            if (any((c("Author","Maintainer") %in% colnames(dcf))))
-                handleError("Do not use Author/Maintainer fields. Use Authors@R.")
-        }
-    }
+    if (!isTar) validMaintainer()
 
     maintainer <- NULL
     if ("Authors@R" %in% colnames(dcf))
@@ -553,12 +413,9 @@ checkVignetteDir <- function(pkgdir, isSourceDir)
 
     checkVigFiles(vigdir, vigdircontents)
 
-    desc <- file.path(pkgdir, "DESCRIPTION")
-    builder <- getVigBuilder(desc)
-
-    if (!is.null(builder)){
+    builder <- getVigBuilder(pkgdir)
+    if (!is.null(builder))
         checkVigBuilder(builder, vigdircontents)
-    }
 
     checkVigMetadata(vigdircontents)
 
@@ -2026,11 +1883,6 @@ checkSkipOnBioc <- function(pkgdir)
     lines
 }
 
-.roxygen_in_desc <- function(pkgdir) {
-    dcf <- read.dcf(file.path(pkgdir, "DESCRIPTION"))
-    "RoxygenNote" %in% colnames(dcf)
-}
-
 checkFormatting <- function(pkgdir, nlines=6)
 {
     pkgname <- basename(pkgdir)
@@ -2360,127 +2212,6 @@ checkBadFiles <- function(package_dir){
             messages = errs
         )
     }
-}
-
-.LICENSE_DB_LOCATION <- "$R_HOME/share/licenses/license.db"
-
-.checkLicenseForRestrictiveUse <- function(license) {
-    handleCheck("Checking License: for restrictive use...")
-
-    if (!identical(length(license), 1L) || is.na(license)) {
-        handleNote("malformed 'License:' field '", license, "'")
-        return(invisible())
-    }
-    ldb_file <- file.path(R.home("share"), "licenses", "license.db")
-    if (!file.exists(ldb_file)) {
-        handleNote(
-            "license database not found. ",
-            "Expected location: '", ldb_file, "'. ",
-            "License: '", license, "'"
-        )
-        return(invisible())
-    }
-    licenses <- read.dcf(ldb_file)
-    result <- tools:::analyze_licenses(license, licenses)
-    test <- result[["restricts_use"]]
-    if (isTRUE(test))
-        handleError("License '", license, "' restricts use")
-    else if (is.na(test) || !result[, "is_verified"]) {
-        handleNote(
-            "License '", license, "' unknown; refer to ", .LICENSE_DB_LOCATION
-        )
-        handleMessage(
-            "and https://choosealicense.com/appendix/ for more info.",
-            indent = 6L
-        )
-    }
-}
-
-.checkDESCfields <- function(dcf) {
-    handleCheck("Checking for recommended DESCRIPTION fields...")
-
-    fields <- c("URL", "BugReports")
-    if ("Date" %in% colnames(dcf)) {
-        date <- dcf[, "Date"]
-        if (!grepl("^\\d{4}-\\d{2}-\\d{2}$", date))
-            handleNote("'Date:' field format is not 'YYYY-MM-DD': ", date)
-    }
-    present <- fields %in% colnames(dcf)
-    res <- fields[!present]
-    if (length(res)) {
-        notFields <- paste(shQuote(res), collapse = ", ")
-        handleNote("Provide ", notFields, " field(s) in DESCRIPTION")
-    }
-}
-
-.checkBiocDepsDESC <- function(dcf, which = c("Depends", "Imports")) {
-    handleCheck("Checking for Bioconductor software dependencies...")
-    which_fields <- dcf[, colnames(dcf) %in% which]
-    all_deps <- unlist(
-        lapply(which_fields, function(x) strsplit(x, ",\\s*")[[1L]]),
-        use.names = FALSE
-    )
-    all_deps <- gsub("(\\w+)\\s+\\(.*\\)$", "\\1", all_deps)
-    all_deps <- all_deps[all_deps != "R"]
-    repo <- BiocManager:::.repositories_bioc(BiocManager::version())["BioCsoft"]
-    biocdb <- utils::available.packages(repos = repo)
-    bioc_deps <- all_deps %in% rownames(biocdb)
-    percent <- unname(round(prop.table(table(bioc_deps))["TRUE"], 2L) * 100)
-
-    if (!any(bioc_deps)) {
-        views <- .parseBiocViews(dcf)
-        handleFUN <-
-            if ("Infrastructure" %in% views) handleNote else handleWarning
-        msg <- "No Bioconductor dependencies detected. Note that some
-            infrastructure packages may not have Bioconductor dependencies.
-            For more information, reach out to the Bioconductor community
-            and/or consider a CRAN submission."
-        handleFUN(msg)
-    } else {
-        handleMessage(
-            "Bioconductor dependencies found in Imports & Depends (",
-            percent,
-            "%)."
-        )
-    }
-}
-
-checkDescription <- function(package_dir) {
-    handleCheck("Checking if DESCRIPTION is well formatted...")
-    dcf <- tryCatch({
-        read.dcf(file.path(package_dir, "DESCRIPTION"))
-    }, error = function(err) {
-        handleError("DESCRIPTION is malformed.")
-        handleMessage(conditionMessage(err))
-        return()
-    })
-    handleCheck("Checking for valid maintainer...")
-    authr <- "Authors@R" %in% colnames(dcf)
-    autmain <- c("Author","Maintainer") %in% colnames(dcf)
-    if (authr && any(autmain))
-        handleError(
-            "Use Authors@R field not Author/Maintainer fields. Do not use both."
-        )
-    else if (any(autmain))
-        handleError("Do not use Author/Maintainer fields. Use Authors@R.")
-}
-
-.checkPinnedDeps <- function(dcf) {
-    handleCheck("Checking for pinned package versions in DESCRIPTION...")
-    deps <- c("Depends", "Imports", "Suggests", "Enhances", "LinkingTo")
-    validdeps <- deps[deps %in% colnames(dcf)]
-    doubleeq <- grepl("==", dcf[, validdeps], fixed = TRUE)
-    if (any(doubleeq))
-        handleError("Dependencies in the DESCRIPTION file contain '=='")
-}
-
-checkDESCRIPTIONFile <- function(package_dir) {
-    dcf <- read.dcf(file.path(package_dir, "DESCRIPTION"))
-
-    .checkLicenseForRestrictiveUse(dcf[,"License"])
-    .checkDESCfields(dcf)
-    .checkBiocDepsDESC(dcf)
-    .checkPinnedDeps(dcf)
 }
 
 checkForCitationFile <- function(package_dir) {
