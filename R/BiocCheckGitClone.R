@@ -1,3 +1,25 @@
+.HIDDEN_FILE_EXTS <- c(
+    ".renviron", ".rprofile", ".rproj", ".rproj.user", ".rhistory",
+    ".rapp.history", ".o", ".sl", ".so", ".dylib", ".a", ".dll", ".def",
+    ".ds_store", "unsrturl.bst", ".log", ".aux", ".backups", ".cproject",
+    ".directory", ".dropbox", ".exrc", ".gdb.history", ".gitattributes",
+    ".gitmodules", ".hgtags", ".project", ".seed", ".settings",
+    ".tm_properties", ".rdata"
+)
+
+# taken from
+# https://github.com/wch/r-source/blob/trunk/src/library/tools/R/build.R#L462
+# https://github.com/wch/r-source/blob/trunk/src/library/tools/R/check.R#L4025
+hidden_file_data <- data.frame(
+    file_ext = .HIDDEN_FILE_EXTS,
+    hidden_only = c(TRUE, TRUE, FALSE, TRUE, TRUE,
+        TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE,
+        TRUE, TRUE, FALSE, FALSE, FALSE, FALSE,
+        FALSE, FALSE, FALSE, FALSE, TRUE,
+        TRUE, FALSE, TRUE, FALSE, FALSE,
+        FALSE, TRUE)
+)
+
 #' Checks specific to a Git clone of a package repository
 #'
 #' Analyzes an R package for adherence with Bioconductor package guidelines and
@@ -47,15 +69,15 @@
 #' @export BiocCheckGitClone
 BiocCheckGitClone <- function(package=".", ...)
 {
-    .zeroCounters()
+    .BiocCheck$zero()
     package <- normalizePath(package)
-    isTar <- grepl("\\.tar\\.gz$", package)
-    if (isTar)
-        .stop("Run 'BiocCheckGitClone' on the Git-cloned package directory.")
     if (!dir.exists(package))
         .stop("Package directory does not exist")
+    .BiocPackage <- .BiocPackage$initialize(package)
+    if (.BiocPackage$isTar)
+        .stop("Run 'BiocCheckGitClone' on the Git-cloned package directory.")
     # be careful here:
-    if (.Platform$OS.type=="windows")
+    if (identical(.Platform$OS.type, "windows"))
         package <- gsub("\\\\", "/", package)
 
     dots <- list(...)
@@ -66,38 +88,25 @@ BiocCheckGitClone <- function(package=".", ...)
     on.exit(options(warn=oldwarn))
     options(warn=1)
 
-    package_dir <- .getPackageDir(package, isTar)
-    package_name <- .getPackageName(package_dir)
-    pkgver <- .getPackageVersion(package_dir)
-    bioccheckver <- as.character(packageVersion("BiocCheck"))
-    biocver <- as.character(BiocManager::version())
-
-    .BiocCheck$metadata <- list(
-        BiocCheckVersion = bioccheckver,
-        BiocVersion = biocver,
-        Package = package_name, PackageVersion = pkgver,
-        sourceDir = package_dir,
-        platform = .Platform$OS.type, isTarBall = isTar
-    )
+    .BiocCheck$addMetadata(.BiocPackage)
     .BiocCheck$verbose <- TRUE
     .BiocCheck$show_meta()
 
     # BiocCheck checks --------------------------------------------------------
     handleCheck("Checking valid files...")
-    checkBadFiles(package)
+    checkBadFiles(.BiocPackage)
 
     handleCheck("Checking for stray BiocCheck output folders...")
-    checkBiocCheckOutputFolder(package_dir, package_name)
+    checkBiocCheckOutputFolder(.BiocPackage)
 
     handleCheck("Checking for inst/doc folders...")
-    checkInstDocFolder(package_dir, package_name)
+    checkInstDocFolder(.BiocPackage)
 
-    handleCheck("Checking DESCRIPTION...")
-    .checkDESCRIPTION(package_dir)
-    validMaintainer()
+    checkDESCRIPTION(.BiocPackage)
+    validMaintainer(.BiocPackage)
 
     handleCheck("Checking CITATION...")
-    checkForCitationFile(package)
+    checkForCitationFile(.BiocPackage)
 
     # BiocCheck results -------------------------------------------------------
     message("\n\U2500 BiocCheck results \U2500\U2500")
@@ -118,4 +127,75 @@ BiocCheckGitClone <- function(package=".", ...)
     }
 
     return(.BiocCheck)
+}
+
+# Checks for BiocCheckGitClone --------------------------------------------
+
+checkBadFiles <- function(.BiocPackage) {
+    package_dir <- .BiocPackage$sourceDir
+    swith <- ifelse(hidden_file_data[["hidden_only"]], .Platform$file.sep, "")
+    ext_expr <- paste0(
+        swith, "\\", hidden_file_data[["file_ext"]], "$", collapse = "|"
+    )
+
+    fls <- dir(package_dir, recursive=TRUE, all.files=TRUE)
+    flist <- split(fls, startsWith(fls, "inst"))
+    warns <- grep(ext_expr, ignore.case = TRUE, flist[['TRUE']], value = TRUE)
+    errs <- grep(ext_expr, ignore.case = TRUE, flist[['FALSE']], value = TRUE)
+
+    ## use gitignore to filter out false positives
+    gitignore <- file.path(package_dir, ".gitignore")
+    if (file.exists(gitignore)) {
+        gitignore <- readLines(gitignore)
+        filter_expr <- paste0(utils::glob2rx(gitignore), collapse = "|")
+        ignored <- grep(
+            filter_expr, ignore.case = TRUE, flist[["FALSE"]], value = TRUE
+        )
+        errs <- errs[!errs %in% ignored]
+    }
+    if (length(warns)) {
+        handleWarning(
+            "System files in '/inst' should not be Git tracked.",
+            messages = warns
+        )
+    }
+
+    if (length(errs)) {
+        handleError(
+            "System files found that should not be Git tracked.",
+            messages = errs
+        )
+    }
+}
+
+checkForCitationFile <- function(.BiocPackage) {
+    package_dir <- .BiocPackage$sourceDir
+    citfile_location <- file.path(package_dir, "inst", "CITATION")
+    if (file.exists(citfile_location)) {
+        handleCheck(
+            "Checking that provided CITATION file is correctly formatted..."
+        )
+        cit <- try(readCitationFile(citfile_location), silent = TRUE)
+        if (is(cit, "try-error"))
+            handleWarning(
+                "Unable to read CITATION file with 'utils::readCitationFile()'"
+            )
+        else if (is.null(cit$doi))
+            handleWarning(
+                "The 'doi' argument is missing or empty in the CITATION's ",
+                "'bibentry()'. Only include a CITATION file if there is a ",
+                "preprint or publication associated with this Bioconductor ",
+                "package."
+            )
+    } else {
+        handleNote(
+            "(Optional) CITATION file not found. Only include a CITATION ",
+            "file if there is a preprint or publication for this Bioconductor ",
+            "package. Note that Bioconductor packages are not required to ",
+            "have a CITATION file but it is useful both for users and for ",
+            "tracking Bioconductor project-wide metrics. When including a ",
+            "CITATION file, add the publication using the  'doi' argument ",
+            "of 'bibentry()'."
+        )
+    }
 }

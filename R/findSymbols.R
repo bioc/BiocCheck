@@ -1,0 +1,128 @@
+findSymbolInParsedCode <-
+    function(parsedCode, pkgname, symbolName, token, silent=FALSE)
+{
+    matches <- list()
+    for (filename in names(parsedCode))
+    {
+        df <- parsedCode[[filename]]
+        matchedrows <- df[which(df$token == token & df$text == symbolName),]
+        if (nrow(matchedrows) > 0)
+        {
+            matches[[filename]] <- matchedrows[, c(1,2)]
+        }
+    }
+    if (token == "SYMBOL_FUNCTION_CALL")
+        parens <- "()"
+    else
+        parens <- ""
+    for (name in names(matches))
+    {
+        x <- matches[[name]]
+        for (i in nrow(x))
+        {
+            if (!silent)
+            {
+                if (grepl("\\.R$", name, ignore.case=TRUE))
+                    handleMessage(sprintf(
+                        "Found %s%s in %s (line %s, column %s)", symbolName,
+                        parens, .getDirFiles(name), x[i,1], x[i,2]))
+                else
+                    handleMessage(sprintf(
+                        "Found %s%s in %s", symbolName, parens,
+                        .getDirFiles(name))) # FIXME test this
+            }
+        }
+    }
+    length(matches) # for tests
+}
+
+findSymbolsInParsedCode <-
+    function(
+        parsedCodeList, symbolNames, tokenTypes,
+        FUN = .getTokenTextCode, fun = TRUE, ...
+    )
+{
+    matches <- structure(vector("list", length(parsedCodeList)),
+        .Names = names(parsedCodeList))
+    allcombos <- expand.grid(
+        tokenTypes = tokenTypes,
+        symbolNames = symbolNames,
+        stringsAsFactors = FALSE
+    )
+    tokenTypes <- allcombos[["tokenTypes"]]
+    symbolNames <- allcombos[["symbolNames"]]
+
+    for (filename in names(parsedCodeList)) {
+        df <- parsedCodeList[[filename]]
+        res <- Map(
+            function(x, y) {
+                FUN(parsedf = df, token = x, text = y, ...)
+            },
+            x= tokenTypes, y = symbolNames
+        )
+        res <- do.call(rbind.data.frame, res)
+        matches[[filename]] <- res
+    }
+
+    matches <- Filter(nrow, matches)
+    if (!length(matches))
+        return(character(0L))
+
+    matches <- lapply(names(matches), function(nm) {
+        dframe <- matches[[nm]]
+        dframe[["text"]] <- paste0(dframe$text,
+            ifelse(dframe$token == "SYMBOL_FUNCTION_CALL", "()", ""))
+        dframe[["filename"]] <- nm
+        dframe
+    })
+
+    matches <- do.call(
+        function(...) rbind.data.frame(..., make.row.names = FALSE),
+        matches
+    )
+    matches[] <- lapply(matches, as.character)
+    apply(matches, 1L, function(rowdf) {
+        fmttxt <- "%s (line %s, column %s)"
+        formt <- if (fun) paste0(rowdf["text"], " in ", fmttxt) else fmttxt
+        sprintf(formt, .getDirFiles(rowdf["filename"]),
+            rowdf["line1"], rowdf["col1"]
+        )
+    })
+}
+
+findSymbolsInRFiles <-
+    function(.BiocPackage, Symbols, tokenType, fun = TRUE, ...)
+{
+    rfiles <- .BiocPackage$RSources
+    parsedCodes <- lapply(
+        structure(rfiles, .Names = rfiles), parseFile,
+        .BiocPackage = .BiocPackage
+    )
+    msg_res <- findSymbolsInParsedCode(
+        parsedCodeList = parsedCodes,
+        symbolNames = Symbols,
+        tokenTypes = tokenType,
+        fun = fun, ...
+    )
+    unlist(msg_res)
+}
+
+findSymbolsInVignettes <-
+    function(.BiocPackage, Symbols, tokenTypes, FUN = .getTokenTextCode)
+{
+    vigfiles <- .BiocPackage$VigSources
+    shortnames <- .getDirFiles(vigfiles)
+    viglist <- structure(vector("list", length(vigfiles)), .Names = shortnames)
+    for (i in seq_along(vigfiles)) {
+        shortName <- shortnames[i]
+        tempR <- tempfile(fileext=".R")
+        try_purl_or_tangle(input = vigfiles[i], output = tempR, quiet = TRUE)
+        pfile <- parseFile(.BiocPackage, tempR)
+        tokens <- FUN(pfile, tokenTypes, Symbols)
+        viglist[[shortName]] <- sprintf(
+            "%s (code line %d, column %d)",
+            shortName, tokens[,"line1"], tokens[,"col1"]
+        )
+    }
+    Filter(length, viglist)
+}

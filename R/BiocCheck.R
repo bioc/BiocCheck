@@ -130,7 +130,7 @@ BiocCheck <- function(
 BiocCheckRun <-
     function(package, checkDir, debug, ...)
 {
-    .zeroCounters()
+    .BiocCheck$zero()
     package <- normalizePath(package)
     if (!file.exists(package) || !isScalarCharacter(package))
         .stop("Package directory or tarball provided does not exist.")
@@ -146,13 +146,14 @@ BiocCheckRun <-
     on.exit(options(warn=oldwarn))
     options(warn=1)
 
-    .BiocPackage <- .BiocPackage(packageDir = package, checkDir = checkDir)
-    isSourceDir <- !.BiocPackage$isTar && file.info(package)[["isdir"]]
+    .BiocPackage <- .BiocPackage$initialize(
+        packageDir = package, checkDir = checkDir
+    )
 
     ## consider merging these operations into one
     handleMessage("* Installing package...", indent = 0, exdent = 0)
 
-    package_install_dir <- installAndLoad(package)
+    package_install_dir <- installAndLoad(.BiocPackage)
     libloc <- file.path(package_install_dir, "lib")
     isBBS <- Sys.getenv("IS_BIOC_BUILD_MACHINE")
     onBBS <- nzchar(isBBS) && identical(tolower(isBBS), "true")
@@ -164,44 +165,44 @@ BiocCheckRun <-
     .BiocCheck$show_meta()
 
     # BiocCheck checks --------------------------------------------------------
-    if (is.null(dots[["no-check-deprecated"]])){
+    if (is.null(dots[["no-check-deprecated"]])) {
         handleCheck("Checking for deprecated package usage...")
-        checkDeprecatedPackages(package_dir)
+        checkDeprecatedPackages(.BiocPackage)
     }
 
     if (is.null(dots[["no-check-remotes"]])){
         handleCheck("Checking for remote package usage...")
-        checkRemotesUsage()
+        checkRemotesUsage(.BiocPackage)
     }
 
     handleCheck("Checking for 'LazyData: true' usage...")
-    checkLazyDataUsage(package_dir)
+    checkLazyDataUsage(.BiocPackage)
 
     if (is.null(dots[["no-check-version-num"]])){
         handleCheck("Checking version number...")
-        if (!isSourceDir) {
+        if (!.BiocPackage$isSourceDir) {
             handleCheck("Checking for version number mismatch...")
-            checkForVersionNumberMismatch(package, package_dir)
+            checkForVersionNumberMismatch(.BiocPackage)
         }
 
         if (!is.null(dots[["new-package"]])) {
             handleCheck("Checking new package version number...")
-            checkNewPackageVersionNumber(package_dir)
+            checkNewPackageVersionNumber(.BiocPackage)
         } else {
             handleCheck("Checking version number validity...")
-            checkVersionNumber(package_dir)
+            checkVersionNumber(.BiocPackage)
         }
     }
 
     if (is.null(dots[["no-check-R-ver"]])) {
         handleCheck("Checking R version dependency...")
-        checkRVersionDependency(package_dir)
+        checkRVersionDependency(.BiocPackage)
     }
 
     if (is.null(dots[["no-check-pkg-size"]])){
         handleCheck("Checking package size...")
-        if (isTar){
-            checkPackageSize(package, package_dir, size=5)
+        if (.BiocPackage$isTar){
+            checkPackageSize(.BiocPackage, size=5)
         } else {
             handleMessage("Skipped... only checked on source tarball", indent=4)
         }
@@ -209,14 +210,14 @@ BiocCheckRun <-
 
     if (is.null(dots[["no-check-file-size"]])){
         handleCheck("Checking individual file sizes...")
-        checkIndivFileSizes(package_dir)
-        checkDataFileSizes(package_dir)
+        checkIndivFileSizes(.BiocPackage)
+        checkDataFileSizes(.BiocPackage)
     }
 
     if (is.null(dots[["no-check-bioc-views"]]))
     {
         handleCheck("Checking biocViews...")
-        result <- checkBiocViews(package_dir)
+        result <- checkBiocViews(.BiocPackage)
         if(result)
         {
             .msg("Search 'biocViews' at https://contributions.bioconductor.org")
@@ -225,51 +226,53 @@ BiocCheckRun <-
 
     if (is.null(dots[["no-check-bbs"]])){
         handleCheck("Checking build system compatibility...")
-        checkBBScompatibility(package_dir, isTar)
+        checkBBScompatibility(.BiocPackage)
     }
 
     if (is.null(dots[["no-check-description"]])) {
-        checkDESCRIPTIONFile(package_dir)
+        checkDESCRIPTIONFile(.BiocPackage)
     }
 
     handleCheck("Checking .Rbuildignore...")
-    checkRbuildignore(package_dir)
+    checkRbuildignore(.BiocPackage)
 
     handleCheck("Checking for stray BiocCheck output folders...")
-    checkBiocCheckOutputFolder(package_dir, package_name)
+    checkBiocCheckOutputFolder(.BiocPackage)
 
-    if (!isTar) {
+    if (!.BiocPackage$isTar) {
         handleCheck("Checking for inst/doc folders...")
-        checkInstDocFolder(package_dir, package_name)
+        checkInstDocFolder(.BiocPackage)
     }
 
     if (is.null(dots[["no-check-vignettes"]])) {
         handleCheck("Checking vignette directory...")
-        checkVignetteDir(package_dir, isSourceDir)
+        checkVignetteDir(.BiocPackage)
         if ("build-output-file" %in% names(dots)) {
             handleCheck(
                 "Checking whether vignette is built with 'R CMD build'..."
             )
-            checkIsVignetteBuilt(package_dir, dots[["build-output-file"]])
+            checkIsVignetteBuilt(dots[["build-output-file"]])
         }
     }
 
     if (is.null(dots[["no-check-library-calls"]])){
         handleCheck("Checking package installation calls in R code...")
-        checkPkgInstallCalls(package_dir)
+        checkPkgInstallCalls(.BiocPackage)
     }
 
-    parsedCode <- parseFiles(package_dir)
+    package_dir <- .BiocPackage$sourceDir
+    package_name <- .BiocPackage$packageName
+    parsedCode <- parseFiles(.BiocPackage)
 
     if (is.null(dots[["no-check-install-self"]])){
         handleCheck(sprintf("Checking for library/require of %s...",
                             package_name))
-        checkForLibraryRequire(package_dir)
+        checkForLibraryRequire(.BiocPackage)
     }
 
     if (is.null(dots[["no-check-coding-practices"]])){
         handleCheck("Checking coding practice...")
-        checkCodingPractice(package_dir, parsedCode, package_name)
+        checkCodingPractice(.BiocPackage, parsedCode)
     }
 
     if (is.null(dots[["no-check-function-len"]])){
@@ -279,7 +282,7 @@ BiocCheckRun <-
 
     if (is.null(dots[["no-check-man-doc"]])){
         handleCheck("Checking man page documentation...")
-        checkManDocumentation(package_dir, package_name, libloc)
+        checkManDocumentation(.BiocPackage, libloc)
     }
 
     if (is.null(dots[["no-check-news"]])){
@@ -301,7 +304,7 @@ BiocCheckRun <-
         handleCheck(
             "Checking formatting of DESCRIPTION, NAMESPACE, ",
             "man pages, R source, and vignette source...")
-        checkFormatting(package_dir)
+        checkFormatting(.BiocPackage)
     }
 
     if (is.null(dots[["no-check-CRAN"]]))
@@ -324,7 +327,7 @@ BiocCheckRun <-
     if (is.null(dots[["no-check-bioc-help"]])) {
         handleCheck("Checking for bioc-devel mailing list subscription...")
         if (hasAdmin) {
-            checkForBiocDevelSubscription(package_dir)
+            checkForBiocDevelSubscription(.BiocPackage)
         } else {
             handleNote(
                 "Cannot determine whether maintainer is subscribed to the ",
@@ -335,7 +338,7 @@ BiocCheckRun <-
         }
 
         handleCheck("Checking for support site registration...")
-        checkForSupportSiteRegistration(package_dir)
+        checkForSupportSiteRegistration(.BiocPackage)
     }
 
     # BiocCheck results -------------------------------------------------------
@@ -361,60 +364,4 @@ BiocCheckRun <-
 
     return(.BiocCheck)
 
-}
-
-.getPackageName <- function(pkgpath)
-{
-    desc <- .BiocCheck$DESCRIPTION
-    if (any(endsWith(pkgpath, c(".tar.gz", ".tar.xz"))))
-        desc <- matrix(
-            gsub("(\\w+)_.*", "\\1", basename(pkgpath)),
-            nrow = 1, dimnames = list(NULL, "Package")
-        )
-    if (!length(desc) || file.info(pkgpath)[["isdir"]])
-        desc <- .readDESCRIPTION(pkgpath)
-    (.BiocCheck$package_name <- unname(desc[, "Package"]))
-}
-
-#' @importFrom utils untar
-.tempPackageDirTarball <- function(pkg_tarball)
-{
-    tmp_dir <- tempfile()
-    pkg_name <- gsub("(\\w+)_.*", "\\1", basename(pkg_tarball))
-    if (!dir.exists(tmp_dir))
-        dir.create(tmp_dir)
-    suppressMessages({
-        untar(pkg_tarball, exdir = tmp_dir)
-    })
-    # pkg_name must match with tarred folder
-    if (!length(.BiocCheck$package_dir))
-        (.BiocCheck$package_dir <- file.path(tmp_dir, pkg_name))
-    else
-        .BiocCheck$package_dir
-}
-
-.getPackageDir <- function(input, isTar) {
-    if (isTar) {
-        .tempPackageDirTarball(input)
-    } else {
-        if (file.info(input)[["isdir"]])
-            (.BiocCheck$package_dir <- input)
-        else
-            .stop("'%s' is not a directory or package source tarball.", input)
-    }
-}
-
-.getBiocCheckDir <- function(pkgName, checkDir) {
-    checkDir <- normalizePath(checkDir, winslash = "/")
-    file.path(
-        checkDir, paste(pkgName, "BiocCheck", sep = ".")
-    )
-}
-
-.getPackageVersion <- function(pkgdir) {
-    desc <- .BiocCheck$DESCRIPTION
-    if (!missing(pkgdir))
-        desc <- .readDESCRIPTION(pkgdir)
-    desc <- file.path(pkgdir, "DESCRIPTION")
-    as.character(read.dcf(desc, fields = "Version"))
 }

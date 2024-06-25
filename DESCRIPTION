@@ -1,29 +1,32 @@
 Package: BiocCheck
-Version: 1.41.3
 Title: Bioconductor-specific package checks
-Description: BiocCheck guides maintainers through Bioconductor best
-  practicies. It runs Bioconductor-specific package checks by searching through
-  package code, examples, and vignettes. Maintainers are required to address all
-  errors, warnings, and most notes produced.
+Version: 1.41.3
+Date: 2024-06-03
 Authors@R: c(
-    person("Bioconductor", "Package Maintainer",
-	email="maintainer@bioconductor.org",
-	role="aut"),
-    person("Lori", "Shepherd", role="aut"),
-    person("Daniel", "von Twisk", role="ctb"),
-    person("Kevin", "Rue", role="ctb"),
+    person("Bioconductor", "Package Maintainer", ,
+        "maintainer@bioconductor.org", "aut"),
+    person("Lori", "Shepherd", role = "aut"),
+    person("Daniel", "von Twisk", role = "ctb"),
+    person("Kevin", "Rue", role = "ctb"),
     person("Marcel", "Ramos", , "marcel.ramos@roswellpark.org",
-      c("aut", "cre"), c(ORCID = "0000-0002-3242-0582")),
+        c("aut", "cre"), c(ORCID = "0000-0002-3242-0582")),
     person("Leonardo", "Collado-Torres", role = "ctb"),
-    person("Federico", "Marini", role="ctb"))
-Depends: R (>= 4.3.0)
+    person("Federico", "Marini", role = "ctb")
+  )
+Description: BiocCheck guides maintainers through Bioconductor best
+    practicies. It runs Bioconductor-specific package checks by searching
+    through package code, examples, and vignettes. Maintainers are
+    required to address all errors, warnings, and most notes produced.
 License: Artistic-2.0
-VignetteBuilder: knitr
+URL: https://github.com/Bioconductor/BiocCheck
+BugReports: https://github.com/Bioconductor/BiocCheck/issues
+Depends: 
+    R (>= 4.4.0)
 Imports:
     BiocBaseUtils,
     BiocFileCache,
     BiocManager,
-    biocViews (>= 1.33.7),
+    biocViews,
     callr,
     codetools,
     graph,
@@ -34,11 +37,16 @@ Imports:
     stringdist,
     tools,
     utils
-Suggests: RUnit, BiocGenerics, Biobase, jsonlite, rmarkdown, downloader,
-    devtools (>= 1.4.1), usethis, BiocStyle, GenomicRanges, gert
-Date: 2024-06-03
+Suggests: 
+    BiocStyle,
+    devtools,
+    gert,
+    jsonlite,
+    rmarkdown,
+    tinytest,
+    usethis
+VignetteBuilder: 
+    knitr
 biocViews: Infrastructure
-URL: https://github.com/Bioconductor/BiocCheck
-BugReports: https://github.com/Bioconductor/BiocCheck/issues
-RoxygenNote: 7.3.1
 Encoding: UTF-8
+RoxygenNote: 7.3.1

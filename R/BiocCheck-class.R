@@ -148,10 +148,6 @@ NULL
         error = "list",
         warning = "list",
         note = "list",
-        validDESC = "logical",
-        DESCRIPTION = "matrix",
-        package_dir = "character",
-        package_name = "character",
         metadata = "list",
         verbose = "logical"
     ),
@@ -264,12 +260,12 @@ NULL
         toJSON = function(file) {
             out <- Filter(length, .self$log)
             jlog <- jsonlite::toJSON(out, auto_unbox = FALSE)
-            if (!requireNamespace("jsonlite", quietly = TRUE))
+            if (!.hasPkg("jsonlite"))
                 stop("Install 'jsonlite' to use the write method.")
             jsonlite::write_json(jlog, file)
         },
         fromJSON = function(file) {
-            if (!requireNamespace("jsonlite", quietly = TRUE))
+            if (!.hasPkg("jsonlite"))
                 stop("Install 'jsonlite' to use the read method.")
             infile <- jsonlite::read_json(file)[[1]]
             .self[["log"]] <- jsonlite::fromJSON(infile, simplifyVector = FALSE)
@@ -400,8 +396,3 @@ NULL
 #' @export
 .BiocCheck <- .BiocCheck()
 .messages <- .MessageCondition()
-
-.zeroCounters <- function(conditions = c("error", "warning", "note"))
-{
-    .BiocCheck$zero(conditions = conditions)
-}

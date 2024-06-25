@@ -1,26 +1,16 @@
-.readDESCRIPTION <- function(package_dir) {
-    dcf <- try({
-        read.dcf(file.path(package_dir, "DESCRIPTION"))
-    }, silent=TRUE)
-    .BiocCheck$validDESC <- !inherits(dcf, "try-error")
-    if (.BiocCheck$validDESC)
-        .BiocCheck$DESCRIPTION <- dcf
-    dcf
-}
-
-.checkDESCRIPTION <- function(package_dir) {
+checkDESCRIPTION <- function(.BiocPackage) {
     handleCheck("Checking if DESCRIPTION is well formatted...")
-    dcf <- .readDESCRIPTION(package_dir)
-    if (!.BiocCheck$validDESC) {
+    if (!.BiocPackage$isValid) {
         handleError("DESCRIPTION is malformed.")
-        handleMessage(dcf)
+        handleMessage(.BiocPackage$readError)
     }
-    dcf
 }
 
-validMaintainer <- function() {
+validMaintainer <- function(.BiocPackage) {
+    if (.BiocPackage$isTar)
+        return()
     handleCheck("Checking for valid maintainer...")
-    dcf <- .BiocCheck$DESCRIPTION
+    dcf <- .BiocPackage$DESCRIPTION
     authr <- "Authors@R" %in% colnames(dcf)
     autmain <- c("Author","Maintainer") %in% colnames(dcf)
     if (authr && any(autmain))
@@ -31,8 +21,8 @@ validMaintainer <- function() {
         handleError("Do not use Author/Maintainer fields. Use Authors@R.")
 }
 
-checkDESCRIPTIONFile <- function(package_dir) {
-    dcf <- .BiocCheck$DESCRIPTION
+checkDESCRIPTIONFile <- function(.BiocPackage) {
+    dcf <- .BiocPackage$DESCRIPTION
 
     checkLicenseForRestrictiveUse(dcf[, "License"])
     checkDESCfields(dcf)
@@ -40,11 +30,9 @@ checkDESCRIPTIONFile <- function(package_dir) {
     checkPinnedDeps(dcf)
 }
 
-checkRemotesUsage <- function(pkgdir)
+checkRemotesUsage <- function(.BiocPackage)
 {
-    dcf <- .BiocCheck$DESCRIPTION
-    if (!length(dcf))
-        dcf <- .readDESCRIPTION(pkgdir)
+    dcf <- .BiocPackage$DESCRIPTION
     if ("Remotes" %in% colnames(dcf))
         handleError(
             "Package dependencies must be on CRAN or Bioconductor.",
@@ -52,11 +40,9 @@ checkRemotesUsage <- function(pkgdir)
         )
 }
 
-checkNewPackageVersionNumber <- function(pkgdir)
+checkNewPackageVersionNumber <- function(.BiocPackage)
 {
-    dcf <- .BiocCheck$DESCRIPTION
-    if (!length(dcf))
-        dcf <- .readDESCRIPTION(pkgdir)
+    dcf <- .BiocPackage$DESCRIPTION
     version <- dcf[, "Version"]
     if (!grepl("^0+[-.][0-9]+[-.][0-9]+$", version))
         handleWarning(
@@ -69,16 +55,15 @@ checkNewPackageVersionNumber <- function(pkgdir)
         )
 }
 
-checkForVersionNumberMismatch <- function(package, package_dir)
+checkForVersionNumberMismatch <- function(.BiocPackage)
 {
-    bn <- basename(package)
-    bn <- sub(".tar.gz", "", bn, TRUE)
-    ver <- strsplit(bn, "_")[[1]][2]
-    dcf <- .BiocCheck$DESCRIPTION
-    if (!length(dcf))
-        dcf <- .readDESCRIPTION(package_dir)
+    if (!.BiocPackage$isTar)
+        return()
+    tarfilename <- .BiocPackage$tarFilename
+    ver <- tail(unlist(strsplit(tarfilename, "_|\\.tar\\.[xg]z")), 1L)
+    dcf <- .BiocPackage$DESCRIPTION
     dcfVer <- unname(dcf[, "Version"])
-    if (!ver == dcfVer)
+    if (!identical(ver, dcfVer))
     {
         handleError(
             "Version number in tarball filename must match Version field ",
@@ -86,11 +71,9 @@ checkForVersionNumberMismatch <- function(package, package_dir)
     }
 }
 
-checkLazyDataUsage <- function(pkgdir)
+checkLazyDataUsage <- function(.BiocPackage)
 {
-    dcf <- .BiocCheck$DESCRIPTION
-    if (!missing(pkgdir))
-        dcf <- .readDESCRIPTION(pkgdir)
+    dcf <- .BiocPackage$DESCRIPTION
     if ("LazyData" %in% colnames(dcf) &&
         tools:::str_parse_logic(dcf[, "LazyData"]))
         handleNote(
@@ -98,12 +81,9 @@ checkLazyDataUsage <- function(pkgdir)
         )
 }
 
-checkVersionNumber <- function(pkgdir)
+checkVersionNumber <- function(.BiocPackage)
 {
-    dcf <- .BiocCheck$DESCRIPTION
-    if (!missing(pkgdir))
-        dcf <- .readDESCRIPTION(pkgdir)
-    version <- dcf[, "Version"]
+    version <- .BiocPackage$packageVersion
     regex <- "^[0-9]+[-\\.]([0-9]+)[-\\.][0-9]+$"
     if(!grepl(regex, version))
     {
@@ -115,82 +95,71 @@ checkVersionNumber <- function(pkgdir)
     }
     tryCatch({
         pv <- package_version(version)
-        x <- pv$major
-        y <- pv$minor
-        mod <- y %% 2
-        isDevel <- identical(
-            BiocManager:::.version_bioc("devel"), BiocManager::version()
-        )
-        bioc.mod <- ifelse(isDevel, 1, 0)
-        if (x == 0) {
-            handleMessage("Package version ", as.character(pv), "; pre-release")
-        } else if (mod != bioc.mod) {
-            shouldBe <- ifelse(isDevel, "odd", "even")
-            vers <- ifelse(isDevel, "devel", "release")
-            handleWarning(
-                "y of x.y.z version should be ", shouldBe, " in ", vers)
-        }
-
     }, error = function(e) {
-        handleError("Invalid package version")
+        handleError(conditionMessage(e))
     })
+    x <- pv$major
+    y <- pv$minor
+    mod <- y %% 2
+    isDevel <- identical(
+        BiocManager:::.version_bioc("devel"), BiocManager::version()
+    )
+    bioc.mod <- as.numeric(isDevel)
+    if (identical(x, 0L)) {
+        handleMessage("Package version ", as.character(pv), "; pre-release")
+    } else if (mod != bioc.mod) {
+        shouldBe <- ifelse(isDevel, "odd", "even")
+        vers <- ifelse(isDevel, "devel", "release")
+        handleWarning(
+            "y of x.y.z version should be ", shouldBe, " in ", vers
+        )
+    }
 }
 
-getMaintainerEmail <- function(pkgdir)
+.PersonAuthorsAtR <- function(dcf, errorFUN = function(e) return(NULL)) {
+    env <- new.env(parent=emptyenv())
+    env[["c"]] <- c
+    env[["person"]] <- utils::person
+    pp <- parse(text=dcf[,"Authors@R"], keep.source=TRUE)
+    tryCatch({
+        eval(pp, env)
+    }, error = errorFUN)
+}
+
+.MainEmailAuthorsAtR <- function(dcf) {
+    email <- NULL
+    people <- .PersonAuthorsAtR(dcf, errorFUN = function(e) return(NULL))
+    for (person in people) {
+        if ("cre" %in% person$role) {
+            email <- person$email
+            break
+        }
+    }
+    email
+}
+
+.MainEmailMaintainer <- function(dcf) {
+    res <- unname(
+        gsub(".*<(.*)>", "\\1", dcf[, "Maintainer"])
+    )
+    if (!nzchar(res)) NULL else res
+}
+
+getMaintainerEmail <- function(.BiocPackage)
 {
     # Eventually update this to just look at Authors@R
     # Since the intention is to possible start running
     # this on the daily builder, leave Maintainer field
     # check. This is used to check for mailing list registration
-
-    dcf <- .BiocCheck$DESCRIPTION
-    if (!length(dcf))
-        dcf <- .readDESCRIPTION(pkgdir)
+    dcf <- .BiocPackage$DESCRIPTION
     if ("Maintainer" %in% colnames(dcf))
-    {
-        m <- unname(dcf[, "Maintainer"])
-        ret <- regexec("<([^>]*)>", m)[[1]]
-        ml <- attr(ret, "match.length")
-        email <- substr(m, ret[2], ret[2]+ml[2]-1)
-    } else if ("Authors@R" %in% colnames(dcf)) {
-        ar <- dcf[, "Authors@R"]
-        env <- new.env(parent=emptyenv())
-        env[["c"]] <- c
-        env[["person"]] <- utils::person
-        pp <- parse(text=ar, keep.source=TRUE)
-        tryCatch(people <- eval(pp, env),
-            error=function(e) {
-                # could not parse Authors@R
-                return(NULL)
-            })
-        for (person in people)
-        {
-            if ("cre" %in% person$role)
-            {
-                email <- person$email
-            }
-        }
-    }
-    return(email)
+        .MainEmailMaintainer(dcf)
+    else if ("Authors@R" %in% colnames(dcf))
+        .MainEmailAuthorsAtR(dcf)
 }
 
-getAllDependencies <- function(pkgdir)
-{
-    dcf <- .BiocCheck$DESCRIPTION
-    fields <- c("Depends", "Imports", "Suggests", "Enhances", "LinkingTo")
-    out <- c()
-    for (field in fields)
-    {
-        if (field %in% colnames(dcf))
-            out <- append(out, cleanupDependency(dcf[, field]))
-    }
-    out
-}
-
-checkRVersionDependency <- function(package_dir) {
-    dcf <- .BiocCheck$DESCRIPTION
-    if (!missing(package_dir))
-        dcf <- .readDESCRIPTION(package_dir)
+checkRVersionDependency <- function(.BiocPackage) {
+    dcf <- .BiocPackage$DESCRIPTION
     if ("Depends" %in% colnames(dcf))
     {
         res <- cleanupDependency(dcf[, "Depends"], FALSE)
@@ -212,25 +181,6 @@ checkRVersionDependency <- function(package_dir) {
             }
         }
     }
-}
-
-isInfrastructurePackage <- function(pkgDir)
-{
-    dcf <- .BiocCheck$DESCRIPTION
-    if (!nrow(dcf))
-        return(FALSE)
-    if (!"biocViews" %in% colnames(dcf))
-    {
-        return(FALSE)
-    }
-    biocViews <- dcf[, "biocViews"]
-    views <- strsplit(gsub("\\s", "", biocViews), ",")[[1]]
-    "Infrastructure" %in% views
-}
-
-.roxygen_in_desc <- function(pkgdir) {
-    dcf <- .BiocCheck$DESCRIPTION
-    "RoxygenNote" %in% colnames(dcf)
 }
 
 .LICENSE_DB_LOCATION <- "$R_HOME/share/licenses/license.db"
@@ -269,7 +219,6 @@ checkLicenseForRestrictiveUse <- function(license) {
 
 checkDESCfields <- function(dcf) {
     handleCheck("Checking for recommended DESCRIPTION fields...")
-
     fields <- c("URL", "BugReports")
     if ("Date" %in% colnames(dcf)) {
         date <- dcf[, "Date"]
@@ -299,7 +248,7 @@ checkBiocDepsDESC <- function(dcf, which = c("Depends", "Imports")) {
     percent <- unname(round(prop.table(table(bioc_deps))["TRUE"], 2L) * 100)
 
     if (!any(bioc_deps)) {
-        views <- .parseBiocViews(dcf = dcf)
+        views <- .BiocPackage$getBiocViews()
         handleFUN <-
             if ("Infrastructure" %in% views) handleNote else handleWarning
         msg <- "No Bioconductor dependencies detected. Note that some

@@ -97,21 +97,10 @@ handleVerbatim <- function(msg, indent=4, exdent=6, width=getOption("width"))
     .verbatim("%s", msg, indent=indent, exdent=exdent, width=width)
 }
 
-.run_r_command <- function(cmd, args, stderr) {
-    res <- system2(cmd, args, stdout=NULL, stderr=stderr)
-    if (res) {
-        message(
-            "  cmd: ", cmd,
-            "\n  args: ", args,
-            "\n  stderr:",
-            "\n  ", paste(readLines(stderr), collapse="\n  "), "\n"
-        )
-    }
-    res
-}
-
-installAndLoad <- function(pkgpath, install_dir = tempfile())
+installAndLoad <- function(.BiocPackage, install_dir = tempfile())
 {
+    pkgpath <- .BiocPackage$sourceDir
+    pkgname <- .BiocPackage$packageName
     if (!dir.exists(install_dir))
         dir.create(install_dir)
     dir.create(libdir <- file.path(install_dir, "lib"))
@@ -130,7 +119,6 @@ installAndLoad <- function(pkgpath, install_dir = tempfile())
     if (!identical(res[["status"]], 0L)) {
         handleError(pkgpath, " must be installable.")
     }
-    pkgname <- .getPackageName(pkgpath)
     res <- callr::r(
         function(pkgname, libdir) {
             tryCatch({
@@ -260,102 +248,6 @@ getAllDeprecatedPkgs <- function()
     )
 }
 
-parseFile <- function(infile, pkgdir) {
-    dir.create(parse_dir <- tempfile())
-    if (grepl("\\.Rnw$|\\.Rmd|\\.Rrst|\\.Rhtml$|\\.Rtex", infile, TRUE)) {
-        outfile <- NULL
-        desc <- file.path(pkgdir, "DESCRIPTION")
-        dcf <- read.dcf(desc)
-        if ("VignetteBuilder" %in% colnames(dcf) &&
-            dcf[,"VignetteBuilder"] == "knitr") {
-            ## parse field in case more than one
-            vigBuilder <- unlist(
-                strsplit(dcf[, "VignetteBuilder"], ", "), use.names = FALSE
-            )
-            if ("knitr" %in% vigBuilder) {
-                if (!requireNamespace("knitr"))
-                    stop("'knitr' required to check 'Rmd' vignettes")
-            }
-        }
-        outfile <- file.path(parse_dir, "parseFile.tmp")
-        suppressWarnings(suppressMessages(
-            capture.output({
-                try_purl_or_tangle(
-                    input=infile, output=outfile, quiet = TRUE, documentation=0L
-                )
-            })
-        ))
-    } else if (grepl("\\.Rd$", infile, TRUE)) {
-        uses_rd_pack <- .usesRdpack(pkgdir)
-        rd <- .parse_Rd_pack(infile, usesRdpack = uses_rd_pack)
-        outfile <- file.path(parse_dir, "parseFile.tmp")
-        code <- capture.output(tools::Rd2ex(rd))
-        writeLines(code, con=outfile, sep="\n")
-    } else if (grepl("\\.R$", infile, TRUE)) {
-        outfile <- infile
-    }
-    p <- parse(outfile, keep.source=TRUE)
-    getParseData(p)
-}
-
-parseFiles <- function(pkgdir)
-{
-    parsedCode <- list()
-    dir1 <- dir(file.path(pkgdir, "R"), pattern="\\.R$", ignore.case=TRUE,
-        full.names=TRUE)
-    dir2 <- dir(file.path(pkgdir, "man"), pattern="\\.Rd$", ignore.case=TRUE,
-        full.names=TRUE)
-    dir3 <- dir(file.path(pkgdir, "vignettes"),
-        pattern="\\.Rnw$|\\.Rmd$|\\.Rrst$|\\.Rhtml$|\\.Rtex$",
-        ignore.case=TRUE, full.names=TRUE)
-    files <- c(dir1, dir2, dir3)
-    for (file in files)
-    {
-        df <- parseFile(file, pkgdir)
-        if (nrow(df))
-            parsedCode[[file]] <- df
-    }
-    parsedCode
-}
-
-findSymbolInParsedCode <- function(parsedCode, pkgname, symbolName,
-    token, silent=FALSE)
-{
-    matches <- list()
-    for (filename in names(parsedCode))
-    {
-        df <- parsedCode[[filename]]
-        matchedrows <- df[which(df$token == token & df$text == symbolName),]
-        if (nrow(matchedrows) > 0)
-        {
-            matches[[filename]] <- matchedrows[, c(1,2)]
-        }
-    }
-    if (token == "SYMBOL_FUNCTION_CALL")
-        parens <- "()"
-    else
-        parens <- ""
-    for (name in names(matches))
-    {
-        x <- matches[[name]]
-        for (i in nrow(x))
-        {
-            if (!silent)
-            {
-                if (grepl("\\.R$", name, ignore.case=TRUE))
-                    handleMessage(sprintf(
-                        "Found %s%s in %s (line %s, column %s)", symbolName,
-                        parens, .getDirFiles(name), x[i,1], x[i,2]))
-                else
-                    handleMessage(sprintf(
-                        "Found %s%s in %s", symbolName, parens,
-                        .getDirFiles(name))) # FIXME test this
-            }
-        }
-    }
-    length(matches) # for tests
-}
-
 .getDirFiles <- function(fpaths) {
     if (!BiocBaseUtils::isCharacter(fpaths, zchar = TRUE, na.ok = TRUE))
         stop("<internal> 'fpaths' input must be a character vector")
@@ -385,117 +277,10 @@ findSymbolInParsedCode <- function(parsedCode, pkgname, symbolName,
     ]
 }
 
-findSymbolsInParsedCode <-
-    function(
-        parsedCodeList, symbolNames, tokenTypes,
-        FUN = .getTokenTextCode, fun = TRUE, ...
-    )
-{
-    matches <- structure(vector("list", length(parsedCodeList)),
-        .Names = names(parsedCodeList))
-    allcombos <- expand.grid(
-        tokenTypes = tokenTypes,
-        symbolNames = symbolNames,
-        stringsAsFactors = FALSE
-    )
-    tokenTypes <- allcombos[["tokenTypes"]]
-    symbolNames <- allcombos[["symbolNames"]]
-
-    for (filename in names(parsedCodeList)) {
-        df <- parsedCodeList[[filename]]
-        res <- Map(
-            function(x, y) {
-                FUN(parsedf = df, token = x, text = y, ...)
-            },
-            x= tokenTypes, y = symbolNames
-        )
-        res <- do.call(rbind.data.frame, res)
-        matches[[filename]] <- res
-    }
-
-    matches <- Filter(nrow, matches)
-    if (!length(matches))
-        return(character(0L))
-
-    matches <- lapply(names(matches), function(nm) {
-        dframe <- matches[[nm]]
-        dframe[["text"]] <- paste0(dframe$text,
-            ifelse(dframe$token == "SYMBOL_FUNCTION_CALL", "()", ""))
-        dframe[["filename"]] <- nm
-        dframe
-    })
-
-    matches <- do.call(
-        function(...) rbind.data.frame(..., make.row.names = FALSE),
-        matches
-    )
-    matches[] <- lapply(matches, as.character)
-    apply(matches, 1L, function(rowdf) {
-        fmttxt <- "%s (line %s, column %s)"
-        formt <- if (fun) paste0(rowdf["text"], " in ", fmttxt) else fmttxt
-        sprintf(formt, .getDirFiles(rowdf["filename"]),
-            rowdf["line1"], rowdf["col1"]
-        )
-    })
-}
-
 docType <- function(rd, tags) {
     if (missing(tags))
         tags <- tools:::RdTags(rd)
     .tagsExtract(rd, tags, "\\docType")
-}
-
-findLogicalFile <- function(fl) {
-    env <- new.env()
-    tryCatch(source(fl, local = env),
-             error = function(err){
-                 return(character())
-             })
-    objs <- ls(env, all.names=TRUE)
-    for (obj in objs){
-      if (!is.function(env[[obj]])){
-           rm(list = obj, envir = env)
-      }
-    }
-    globals <- eapply(env, safeFindGlobals)
-    if (length(globals) != 0) {
-        names(which(unlist(lapply(globals, function(x) {
-            any(c("T","F") %in% x)
-        }))))
-    } else {
-      character()
-    }
-}
-
-safeFindGlobals <- function(env, ...) {
-    tryCatch({
-        findGlobals(env, ...)
-    }, error = warning)
-}
-
-findLogicalRdir <- function(pkgname, symbol){
-
-    env <- getNamespace(pkgname)
-    objs <- ls(env, all.names=TRUE)
-    objs <- objs[grep("^.__[CTM]__", objs, invert=TRUE)]
-    globals <- lapply(objs, function(obj) {
-        value <- env[[obj]]
-        if (identical(typeof(value), "closure")) {
-            findGlobals(value)
-        } else character(0)
-    })
-    names(globals) <- objs
-    if (length(globals) != 0) {
-        found <- vapply(
-            globals, function(x, symbol) any(symbol %in% x), logical(1), symbol
-        )
-        funName <- names(globals)[found]
-        if (length(funName) > 0) {
-            paste0(funName, "()")
-        } else character()
-    } else {
-      character()
-    }
 }
 
 grepPkgDir <- function(pkgdir, greparg, full_path=FALSE){
@@ -534,21 +319,6 @@ grepPkgDir <- function(pkgdir, greparg, full_path=FALSE){
     msg_files
 }
 
-getVigSources <- function(dir)
-{
-    dir(
-        dir,
-        pattern="\\.Rmd$|\\.Rnw$|\\.Rrst$|\\.Rhtml$|\\.Rtex$",
-        ignore.case=TRUE, full.names=TRUE
-    )
-}
-
-getRSources <- function(Rdir) {
-    if (!identical(basename(Rdir), "R"))
-        Rdir <- file.path(Rdir, "R")
-    dir(Rdir, pattern = "\\.[Rr]$", full.names = TRUE)
-}
-
 getBadDeps <- function(pkgdir, lib.loc)
 {
     cmd <- file.path(Sys.getenv("R_HOME"), "bin", "R")
@@ -560,18 +330,6 @@ getBadDeps <- function(pkgdir, lib.loc)
         paste(dQuote(pkgdir), dQuote(lib.loc)))
     system2(cmd, args, stdout=TRUE, stderr=FALSE,
         env="R_DEFAULT_PACKAGES=NULL")
-}
-
-getVigBuilder <- function(pkgdir)
-{
-    dcf <- .BiocCheck$DESCRIPTION
-    if (!length(dcf))
-        dcf <- .readDESCRIPTION(pkgdir)
-    if (length(dcf))
-        builder <- dcf[, "VignetteBuilder"]
-    else
-        builder <- NA
-    if (is.na(builder)) NULL else unlist(strsplit(builder, ",\\s+"))
 }
 
 getVigEngine <- function(vignetteFile){
@@ -599,22 +357,6 @@ vigHelper <- function(vignetteFile, builder){
     env <- new.env(parent = emptyenv())
     data(list = dataname, package = package, envir = env)
     env[[dataname]]
-}
-
-getPkgType <- function(pkgdir)
-{
-    views <- .parseBiocViews(pkgdir)
-    if (identical(length(views), 1L) && !nzchar(views))
-        return(NA)
-
-    biocViewsVocab <- .load_data("biocViewsVocab", "biocViews")
-
-    if (any(!views %in% nodes(biocViewsVocab)))
-        return(NA)
-
-    parents <- vapply(views, getParent, character(1L), biocViewsVocab)
-    u <- unique(parents)
-    if (identical(length(u), 1L)) return(u) else return(NA)
 }
 
 getParent <- function(view, biocViewsVocab)
