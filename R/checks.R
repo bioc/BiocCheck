@@ -2337,6 +2337,16 @@ checkBadFiles <- function(package_dir){
     warns <- grep(ext_expr, ignore.case = TRUE, flist[['TRUE']], value = TRUE)
     errs <- grep(ext_expr, ignore.case = TRUE, flist[['FALSE']], value = TRUE)
 
+    ## use gitignore to filter out false positives
+    gitignore <- file.path(package_dir, ".gitignore")
+    if (file.exists(gitignore)) {
+        gitignore <- readLines(gitignore)
+        filter_expr <- paste0(utils::glob2rx(gitignore), collapse = "|")
+        ignored <- grep(
+            filter_expr, ignore.case = TRUE, flist[["FALSE"]], value = TRUE
+        )
+        errs <- errs[!errs %in% ignored]
+    }
     if (length(warns)) {
         handleWarning(
             "System files in '/inst' should not be Git tracked.",
