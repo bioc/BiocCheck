@@ -335,7 +335,7 @@ NULL
                 )
             } else {
                 lens <- lengths(text)
-                indents <- seq(4, by = 2, length = lens)
+                indents <- seq(4, by = 2, length.out = lens)
                 text[[1]][[lens]] <- selectSome(
                     unlist(tail(text[[1]], 1L))
                 )
