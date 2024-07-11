@@ -1189,91 +1189,92 @@ expect_identical(.bioctest$packageType, NA_character_)
 unlink(temp_dir, recursive = TRUE)
 
 # checkForBiocDevelSubscription -------------------------------------------
-if (!nchar(Sys.getenv("BIOC_DEVEL_PASSWORD")))
-    return()
+if (nchar(Sys.getenv("BIOC_DEVEL_PASSWORD"))) {
 
-temp_dir <- tempfile()
-.bioctest <- create_test_package(
-    test_dir = temp_dir,
-    description = list(Maintainer = "Joe Blow <foo@bar.com>")
-)
-BiocCheck:::checkForBiocDevelSubscription(.bioctest)
-checkCounter("Maintainer subscribed to the bioc-devel mailing list")
+    temp_dir <- tempfile()
+    .bioctest <- create_test_package(
+        test_dir = temp_dir,
+        description = list(Maintainer = "Joe Blow <foo@bar.com>")
+    )
+    BiocCheck:::checkForBiocDevelSubscription(.bioctest)
+    checkCounter("Maintainer subscribed to the bioc-devel mailing list")
 
-.bioctest <- create_test_package(
-    test_dir = temp_dir,
-    description = list(
-        Maintainer =
-            "Bioconductor Maintainer <maintainer@bioconductor.org>"
-    ),
-    use.canned = FALSE
-)
-BiocCheck:::checkForBiocDevelSubscription(.bioctest)
-expect_true(stillZero())
-.BiocCheck$zero()
+    .bioctest <- create_test_package(
+        test_dir = temp_dir,
+        description = list(
+            Maintainer =
+                "Bioconductor Maintainer <maintainer@bioconductor.org>"
+        ),
+        use.canned = FALSE
+    )
+    BiocCheck:::checkForBiocDevelSubscription(.bioctest)
+    expect_true(stillZero())
+    .BiocCheck$zero()
 
-.bioctest <- create_test_package(
-    test_dir = temp_dir,
-    description = list(
-        Maintainer =
-            "Bioconductor Maintainer <MAINTAINER@bioconductor.ORG>"
-    ),
-    use.canned = FALSE
-)
-BiocCheck:::checkForBiocDevelSubscription(.bioctest)
-expect_true(stillZero())
-.BiocCheck$zero()
+    .bioctest <- create_test_package(
+        test_dir = temp_dir,
+        description = list(
+            Maintainer =
+                "Bioconductor Maintainer <MAINTAINER@bioconductor.ORG>"
+        ),
+        use.canned = FALSE
+    )
+    BiocCheck:::checkForBiocDevelSubscription(.bioctest)
+    expect_true(stillZero())
+    .BiocCheck$zero()
 
-result_email <- BiocCheck:::getMaintainerEmail(.bioctest)
-expect_true(
-    identical(result_email, "MAINTAINER@bioconductor.ORG")
-)
+    result_email <- BiocCheck:::getMaintainerEmail(.bioctest)
+    expect_true(
+        identical(result_email, "MAINTAINER@bioconductor.ORG")
+    )
 
-.bioctest <- create_test_package(
-    test_dir = temp_dir,
-    description = list(
-        Package = "uniTestTempDir",
-        Version = "0.99.0",
-        `Authors@R` = c("person('BioC', 'Maintainer',",
-            "email = 'Maintainer@bioconductor.org',",
-            "role = c('aut', 'cre'))"
-        )
-    ),
-    use.canned = FALSE
-)
-result_email <- BiocCheck:::getMaintainerEmail(.bioctest)
-expect_identical(result_email, "Maintainer@bioconductor.org")
+    .bioctest <- create_test_package(
+        test_dir = temp_dir,
+        description = list(
+            Package = "uniTestTempDir",
+            Version = "0.99.0",
+            `Authors@R` = c("person('BioC', 'Maintainer',",
+                "email = 'Maintainer@bioconductor.org',",
+                "role = c('aut', 'cre'))"
+            )
+        ),
+        use.canned = FALSE
+    )
+    result_email <- BiocCheck:::getMaintainerEmail(.bioctest)
+    expect_identical(result_email, "Maintainer@bioconductor.org")
 
-.bioctest <- create_test_package(
-    test_dir = temp_dir,
-    description = list(
-        Version = "0.99.0",
-        `Authors@R` = c(
-            "c(person('Joe', \n  'Blow', email='joe@blow.org',",
-            "role=c('aut', 'cre')))"
-        )
-    ),
-    use.canned = FALSE
-)
-BiocCheck:::checkForBiocDevelSubscription(.bioctest)
-checkCounter("Maintainer subscribed to the bioc-devel mailing list")
+    .bioctest <- create_test_package(
+        test_dir = temp_dir,
+        description = list(
+            Version = "0.99.0",
+            `Authors@R` = c(
+                "c(person('Joe', \n  'Blow', email='joe@blow.org',",
+                "role=c('aut', 'cre')))"
+            )
+        ),
+        use.canned = FALSE
+    )
+    BiocCheck:::checkForBiocDevelSubscription(.bioctest)
+    checkCounter("Maintainer subscribed to the bioc-devel mailing list")
 
-.bioctest <- create_test_package(
-    test_dir = temp_dir,
-    description = list(
-        Version = "0.99.0",
-        `Authors@R` = c(
-            "c(person('BioC', \n  'Maintainer',",
-            "email='maintainer@bioconductor.org',",
-            "role=c('aut', 'cre')))"
-        )
-    ),
-    use.canned = FALSE
-)
-BiocCheck:::checkForBiocDevelSubscription(.bioctest)
-expect_true(stillZero())
-.BiocCheck$zero()
-unlink(temp_dir, recursive = TRUE)
+    .bioctest <- create_test_package(
+        test_dir = temp_dir,
+        description = list(
+            Version = "0.99.0",
+            `Authors@R` = c(
+                "c(person('BioC', \n  'Maintainer',",
+                "email='maintainer@bioconductor.org',",
+                "role=c('aut', 'cre')))"
+            )
+        ),
+        use.canned = FALSE
+    )
+    BiocCheck:::checkForBiocDevelSubscription(.bioctest)
+    expect_true(stillZero())
+    .BiocCheck$zero()
+    unlink(temp_dir, recursive = TRUE)
+
+}
 
 # checkForSupportSiteRegistration ----------------------------------------
 connect <- suppressWarnings(
