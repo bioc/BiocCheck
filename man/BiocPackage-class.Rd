@@ -13,67 +13,88 @@ An object of class \code{BiocPackage} of length 1.
 .BiocPackage
 }
 \value{
-An object of class `BiocPackage`
+An object of class \code{BiocPackage}
 }
 \description{
 The BiocPackage class is used to represent a Bioconductor
-  package. It is used by BiocCheck to store information about the package
-  being checked. The class has several methods to identify the type of
-  package, check for common issues, and store metadata about the package.
+package. It is used by BiocCheck to store information about the package
+being checked. The class has several methods to identify the type of
+package, check for common issues, and store metadata about the package.
 }
 \section{Fields}{
 
 \describe{
-\item{\code{isValid}}{`logical` indicating whether the package's `DESCRIPTION` file
+\item{\code{isValid}}{\code{logical} indicating whether the package's \code{DESCRIPTION} file
 was able to be read without any errors}
 
-\item{\code{isTar}}{`logical` indicating whether the package is a tarball}
+\item{\code{isTar}}{\code{logical} indicating whether the package is a tarball}
 
-\item{\code{isSourceDir}}{`logical` indicating whether the package being checked is
+\item{\code{isSourceDir}}{\code{logical} indicating whether the package being checked is
 from a source directory}
 
-\item{\code{isInfrastructure}}{`logical` indicating whether the package is an
-Bioconductor infrastructure package based on the `biocViews` field}
+\item{\code{isInfrastructure}}{\code{logical} indicating whether the package is an
+Bioconductor infrastructure package based on the \code{biocViews} field}
 
-\item{\code{usesRoxygen}}{`logical` indicating whether the package uses `roxygen2`
+\item{\code{usesRoxygen}}{\code{logical} indicating whether the package uses \code{roxygen2}
 documentation}
 
-\item{\code{usesRdpack}}{`logical` indicating whether the package uses `Rdpack`
+\item{\code{usesRdpack}}{\code{logical} indicating whether the package uses \code{Rdpack}
 package}
 
-\item{\code{DESCRIPTION}}{`matrix` containing the DCF contents of the `DESCRIPTION`
+\item{\code{DESCRIPTION}}{\code{matrix} containing the DCF contents of the \code{DESCRIPTION}
 file}
 
-\item{\code{dependencies}}{`character` vector of package dependencies}
+\item{\code{dependencies}}{\code{character} vector of package dependencies}
 
-\item{\code{readError}}{`character` error message if the `DESCRIPTION` file could
+\item{\code{readError}}{\code{character} error message if the \code{DESCRIPTION} file could
 not be read}
 
-\item{\code{packageVersion}}{`character` version of the package}
+\item{\code{packageVersion}}{\code{character} version of the package}
 
-\item{\code{packageType}}{`character` indicating the type of package based on the
-`biocViews` field; can be `NA_character_` there are invalid `biocViews`
+\item{\code{packageType}}{\code{character} indicating the type of package based on the
+\code{biocViews} field; can be \code{NA_character_} there are invalid \code{biocViews}
 terms}
 
-\item{\code{sourceDir}}{`character` path to the source directory}
+\item{\code{sourceDir}}{\code{character} path to the source directory}
 
-\item{\code{vignettesDir}}{`character` path to the vignettes directory}
+\item{\code{vignettesDir}}{\code{character} path to the vignettes directory}
 
-\item{\code{RSources}}{`character` vector of R source files}
+\item{\code{RSources}}{\code{character} vector of R source files}
 
-\item{\code{VigSources}}{`character` vector of vignette source files}
+\item{\code{VigSources}}{\code{character} vector of vignette source files}
 
-\item{\code{manSources}}{`character` vector of Rd source files}
+\item{\code{manSources}}{\code{character} vector of Rd source files}
 
-\item{\code{BiocCheckDir}}{`character` path to the directory where the package
+\item{\code{BiocCheckDir}}{\code{character} path to the directory where the package
 BiocCheck logs are written}
 
-\item{\code{packageName}}{`character` name of the package}
+\item{\code{packageName}}{\code{character} name of the package}
 
-\item{\code{tarFilename}}{`character` filename of the tarball}
+\item{\code{tarFilename}}{\code{character} filename of the tarball}
 
-\item{\code{metadata}}{`list` containing metadata about the package}
+\item{\code{metadata}}{\code{list} containing metadata about the package}
 }}
+
+\section{methods}{
+
+\itemize{
+\item \code{initialize}: Initialize a \code{BiocPackage} object
+\item \code{getPackageDir}: Get the package directory
+\item \code{getRSources}: Get the R source files
+\item \code{getVigSources}: Get the vignette source files
+\item \code{getManSources}: Get the Rd source files
+\item \code{getBiocCheckDir}: Get the directory where the BiocCheck logs are written
+\item \code{getBiocViews}: Get the \code{biocViews} field from the \code{DESCRIPTION} file
+\item \code{getPackageType}: Get the package type based on the \code{biocViews} field
+\item \code{readDESCRIPTION}: Read the \code{DESCRIPTION} file
+\item \code{getVigBuilder}: Get the vignette builder
+\item \code{getAllDependencies}: Get all dependencies from the \code{DESCRIPTION} file
+\item \code{findInfrastructure}: Is the package an infrastructure package?
+\item \code{findRoxygen}: Does the package use \code{roxygen2}?
+\item \code{getPackageVersion}: Get the package version
+\item \code{untarTarball}: Untar the source tarball
+}
+}
 
 \examples{
 

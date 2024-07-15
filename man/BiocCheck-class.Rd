@@ -21,22 +21,20 @@ instances by running them in separate processes (e.g., via \code{BiocParallel}).
 \details{
 The metadata includes a number of standard fields to allow easier
 troubleshooting and display of potentially relevant information. Currently,
-the fields included are
-
-\describe{
-\item{BiocCheckVersion}{ The version of the BiocCheck package }
-\item{BiocVersion}{ The version of Bioconductor }
-\item{Package}{ The name of the package in check }
-\item{PackageVersion}{ The version of the package in check }
-\item{sourceDir}{ The directory of the package source or tarball in check }
-\item{installDir}{ The directory where the package is installed for
+the fields included are:
+\itemize{
+\item BiocCheckVersion:  The version of the BiocCheck package
+\item BiocVersion:  The version of Bioconductor
+\item Package:  The name of the package in check
+\item PackageVersion:  The version of the package in check
+\item sourceDir:  The directory of the package source or tarball in check
+\item installDir: The directory where the package is installed for
 testing, a temporary location by default
-}
-\item{BiocCheckDir}{ The directory where the \verb{<package>.BiocCheck} folder
-is saved. Usually the same folder as the package in check }
-\item{platform}{ The platform/OS where the check is taking place }
-\item{isTarBall}{ Whether the package in check is a source directory or a
-tarball }
+\item BiocCheckDir: The directory where the \verb{<package>.BiocCheck} folder
+is saved. Usually the same folder as the package in check
+\item platform:  The platform/OS where the check is taking place
+\item isTarBall: Whether the package in check is a source directory or a
+tarball
 }
 }
 \section{Fields}{
@@ -48,7 +46,7 @@ warnings, errors)}
 \item{\code{check}}{\code{character(1)} The title of the last check used for logging
 purposes.}
 
-\item{\code{error,}}{warning, note \code{list()} Finer extraction of each condition type}
+\item{\code{error,warning,note}}{\code{list()} Finer extraction of each condition type}
 
 \item{\code{metadata}}{\code{list()} A list of additional information relevant to the
 package and its state. See details.}

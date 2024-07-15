@@ -15,7 +15,7 @@ summarized.}
 \item{idx}{logical() same length as \code{lines} indicating lines in which
 event occurs}
 
-\item{offset}{`integer(1)` The number of lines to add to the 'Line' column
+\item{offset}{\code{integer(1)} The number of lines to add to the 'Line' column
 calculation. It is mainly used to account for the number of lines that the
 YAML header occupies.}
 }

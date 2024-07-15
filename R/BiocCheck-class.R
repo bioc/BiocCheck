@@ -17,23 +17,20 @@
 #'
 #' @details The metadata includes a number of standard fields to allow easier
 #'   troubleshooting and display of potentially relevant information. Currently,
-#'   the fields included are
+#'   the fields included are:
 #'
-#' \describe{
-#'   \item{BiocCheckVersion}{ The version of the BiocCheck package }
-#'   \item{BiocVersion}{ The version of Bioconductor }
-#'   \item{Package}{ The name of the package in check }
-#'   \item{PackageVersion}{ The version of the package in check }
-#'   \item{sourceDir}{ The directory of the package source or tarball in check }
-#'   \item{installDir}{ The directory where the package is installed for
+#'   * BiocCheckVersion:  The version of the BiocCheck package
+#'   * BiocVersion:  The version of Bioconductor
+#'   * Package:  The name of the package in check
+#'   * PackageVersion:  The version of the package in check
+#'   * sourceDir:  The directory of the package source or tarball in check
+#'   * installDir: The directory where the package is installed for
 #'     testing, a temporary location by default
-#'   }
-#'   \item{BiocCheckDir}{ The directory where the `<package>.BiocCheck` folder
-#'     is saved. Usually the same folder as the package in check }
-#'   \item{platform}{ The platform/OS where the check is taking place }
-#'   \item{isTarBall}{ Whether the package in check is a source directory or a
-#'     tarball }
-#' }
+#'   * BiocCheckDir: The directory where the `<package>.BiocCheck` folder
+#'     is saved. Usually the same folder as the package in check
+#'   * platform:  The platform/OS where the check is taking place
+#'   * isTarBall: Whether the package in check is a source directory or a
+#'     tarball
 #'
 #' @field log `list()` A running list of all conditions raised (i.e., notes,
 #'   warnings, errors)
@@ -41,7 +38,7 @@
 #' @field check `character(1)` The title of the last check used for logging
 #'   purposes.
 #'
-#' @field error, warning, note `list()` Finer extraction of each condition type
+#' @field error,warning,note `list()` Finer extraction of each condition type
 #'
 #' @field metadata `list()` A list of additional information relevant to the
 #'   package and its state. See details.
@@ -52,8 +49,6 @@
 #'   `FALSE` and `TRUE` for `BiocCheck` and `BiocCheckGitClone`, respectively.
 #'
 #' @return A `BiocCheck` instance
-#'
-#' @md
 #'
 #' @keywords internal
 #' @seealso \link{Message-class}
@@ -109,32 +104,30 @@ NULL
 #'   created by `toJSON` and `fromJSON` `BiocCheck` methods.
 #'
 #' @section methods:
-#' \describe{
-#'   \item{add}{ Include a condition to the `BiocCheck` report }
-#'   \item{getLastCheck}{ Obtain the name of the last check run }
-#'   \item{setCheck}{ Create a new element in the internal list for a check }
-#'   \item{get}{ Extract the list of conditions raised by `BiocCheck` }
-#'   \item{getNum}{ Tally the number of condition provided by the input }
-#'   \item{zero}{ Reset the internal log of the condition provided }
-#'   \item{getBiocCheckDir}{ Report and create the `<package>.BiocCheck`
-#'     directory as obtained from the metadata }
-#'   \item{composeReport}{ Simplify the list structure from the `log` and
-#'     provide a character vector of conditions raised }
-#'   \item{report}{ Write the `00BiocCheck.log` report into the `BiocCheck`
-#'     folder }
-#'   \item{toJSON}{ Write a JSON file to the location indicated with the
-#'     conditions raised }
-#'   \item{fromJSON}{ Read a JSON file from the location indicated with the
-#'     output of previous conditions raised in the check }
-#'   \item{show}{ Display the information in the class. Currently empty. }
-#'   \item{show_meta}{ Display the metadata information stored in the `metadata`
-#'     field }
-#' }
+#'   * `add`: Include a condition to the `BiocCheck` report
+#'   * `getLastCheck`: Obtain the name of the last check run
+#'   * `setCheck`: Create a new element in the internal list for a check
+#'   * `get`: Extract the list of conditions raised by `BiocCheck`
+#'   * `getNum`: Tally the number of condition provided by the input
+#'   * `zero`: Reset the internal log of the condition provided
+#'   * `addMetadata`: Add metadata to the `BiocCheck` object from a
+#'     `BiocPackage` object
+#'   * `getBiocCheckDir`: Report and create the `<package>.BiocCheck`
+#'     directory as obtained from the metadata
+#'   * `composeReport`: Simplify the list structure from the `log` and
+#'     provide a character vector of conditions raised
+#'   * `report`: Write the `00BiocCheck.log` report into the `BiocCheck`
+#'     folder
+#'   * `toJSON`: Write a JSON file to the location indicated with the
+#'     conditions raised
+#'   * `fromJSON`: Read a JSON file from the location indicated with the
+#'     output of previous conditions raised in the check
+#'   * `show`: Display the information in the class. Currently empty.
+#'   * `show_meta`: Display the metadata information stored in the `metadata`
+#'     field
 #'
 #' @return An internal `BiocCheck` R5 Reference Class used to document
 #'   conditions such as errors, warnings, and notes
-#'
-#' @md
 #'
 NULL
 
@@ -302,8 +295,6 @@ NULL
 #'
 #' @return A `Message` class instance
 #'
-#' @md
-#'
 NULL
 
 # Message-methods ---------------------------------------------------------
@@ -328,8 +319,6 @@ NULL
 #'
 #' @return An internal `R5` Reference Class to handle messages and their
 #'   conditions, e.g., for errors, warnings, or notes.
-#'
-#' @md
 #'
 NULL
 

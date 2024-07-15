@@ -48,18 +48,16 @@ hidden_file_data <- data.frame(
 #'   check reporting. The function returns a `BiocCheck` reference class with
 #'   three main list elements:
 #'
-#' \item{error}{Items to address before the package can be accepted}
+#' * error: Items to address before the package can be accepted
 #'
-#' \item{warning}{Strongly suggested items that may require attention}
+#' * warning: Strongly suggested items that may require attention
 #'
-#' \item{note}{Items to consider, though not required, before acceptance}
+#' * note: Items to consider, though not required, before acceptance
 #'
 #' @author Lori Shepherd
 #'
 #' @references \url{https://contributions.bioconductor.org}
 #' @seealso \link{BiocCheck-class}
-#'
-#' @md
 #'
 #' @examples
 #'

@@ -17,12 +17,11 @@ ball.}
 \code{BiocCheckGitClone()} is chiefly called for the side effect of the
 check reporting. The function returns a \code{BiocCheck} reference class with
 three main list elements:
-
-\item{error}{Items to address before the package can be accepted}
-
-\item{warning}{Strongly suggested items that may require attention}
-
-\item{note}{Items to consider, though not required, before acceptance}
+\itemize{
+\item error: Items to address before the package can be accepted
+\item warning: Strongly suggested items that may require attention
+\item note: Items to consider, though not required, before acceptance
+}
 }
 \description{
 Analyzes an R package for adherence with Bioconductor package guidelines and

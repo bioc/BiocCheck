@@ -22,42 +22,40 @@
 #'
 #' @section dot-options:
 #'
-#' \describe{
-#'   \item{new-package}{ enable checks specific to new packages}
-#'   \item{no-check-dependencies}{ disable check for bad dependencies}
-#'   \item{no-check-deprecated}{ disable check for usage of deprecated packages}
-#'   \item{no-check-remotes}{ disable check for usage of remote packages other
-#'     than those hosted on CRAN or Bioconductor}
-#'   \item{no-check-version-num}{ disable check for valid version number}
-#'   \item{no-check-R-ver}{ disable check for valid R version}
-#'   \item{no-check-pkg-size}{ disable check for package tarball size}
-#'   \item{no-check-file-size}{ disable check for individual file size}
-#'   \item{no-check-bioc-views}{ disable biocViews-specific checks (for non-BioC
-#'     packages)}
-#'   \item{no-check-bbs}{ disable BBS-specific checks (for non-BioC packages).
-#'     Valid DESCRIPTION}
-#'   \item{no-check-description}{ disable DESCRIPTION file checks}
-#'   \item{no-check-vignettes}{ disable vignette checks}
-#'   \item{no-check-library-calls}{ disable check usage of functions that
-#'     install or update packages}
-#'   \item{no-check-install-self}{ disable check for require or library of
-#'     itself}
-#'   \item{no-check-coding-practices}{ disable check for some common best coding
-#'     practices}
-#'   \item{no-check-function-len}{ disable check for function length}
-#'   \item{no-check-man-doc}{ disable checks for man page documentation}
-#'   \item{no-check-news}{ disable checks for NEWS file}
-#'   \item{no-check-unit-tests}{ disable checks for unit tests}
-#'   \item{no-check-skip-bioc-tests}{ disable check for tests that skip when on
-#'     bioc}
-#'   \item{no-check-formatting}{ disable checks for file formatting}
-#'   \item{no-check-CRAN}{ disable check for if package exists in CRAN}
-#'   \item{no-check-bioc-help}{ disable check for registration on Bioconductor
-#'     mailing list and support site}
-#'   \item{build-output-file}{ file containing R CMD build output, for
-#'     additional analysis}
-#'   \item{quit-with-status}{ enable exit code option when performing check}
-#' }
+#'   * `new-package`:  enable checks specific to new packages
+#'   * `no-check-dependencies`:  disable check for bad dependencies
+#'   * `no-check-deprecated`:  disable check for usage of deprecated packages
+#'   * `no-check-remotes`: disable check for usage of remote packages other
+#'     than those hosted on CRAN or Bioconductor
+#'   * `no-check-version-num`:  disable check for valid version number
+#'   * `no-check-R-ver`:  disable check for valid R version
+#'   * `no-check-pkg-size`:  disable check for package tarball size
+#'   * `no-check-file-size`:  disable check for individual file size
+#'   * `no-check-bioc-views`: disable biocViews-specific checks (for non-BioC
+#'     packages)
+#'   * `no-check-bbs`: disable BBS-specific checks (for non-BioC packages).
+#'     Valid DESCRIPTION
+#'   * `no-check-description`:  disable DESCRIPTION file checks
+#'   * `no-check-vignettes`:  disable vignette checks
+#'   * `no-check-library-calls`: disable check usage of functions that
+#'     install or update packages
+#'   * `no-check-install-self`: disable check for require or library of
+#'     itself
+#'   * `no-check-coding-practices`: disable check for some common best coding
+#'     practices
+#'   * `no-check-function-len`:  disable check for function length
+#'   * `no-check-man-doc`:  disable checks for man page documentation
+#'   * `no-check-news`:  disable checks for NEWS file
+#'   * `no-check-unit-tests`:  disable checks for unit tests
+#'   * `no-check-skip-bioc-tests`: disable check for tests that skip when on
+#'     bioc
+#'   * `no-check-formatting`:  disable checks for file formatting
+#'   * `no-check-CRAN`:  disable check for if package exists in CRAN
+#'   * `no-check-bioc-help`: disable check for registration on Bioconductor
+#'     mailing list and support site
+#'   * `build-output-file`: file containing R CMD build output, for
+#'     additional analysis
+#'   * `quit-with-status`:  enable exit code option when performing check
 #'
 #' @param package The path to an R package directory or tarball (`.tar.gz`).
 #'   The `BiocCheck` function is intended to be run from the package
@@ -84,15 +82,13 @@
 #'   reporting. The function also creates a `<package_name>.BiocCheck` folder
 #'   and returns a `BiocCheck` reference class with three main list elements:
 #'
-#' \item{error}{Items to address before the package can be accepted}
+#' * **error**: Items to address before the package can be accepted
 #'
-#' \item{warning}{Strongly suggested items that may require attention}
+#' * **warning**: Strongly suggested items that may require attention
 #'
-#' \item{note}{Items to consider, though not required, before acceptance}
+#' * **note**: Items to consider, though not required, before acceptance
 #'
 #' @author Dan Tenenbaum, Lori Shepherd, and Marcel Ramos
-#'
-#' @md
 #'
 #' @references \url{https://contributions.bioconductor.org}
 #' @seealso \link{BiocCheck-class}, \link{Message-class}

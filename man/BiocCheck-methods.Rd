@@ -46,26 +46,28 @@ A list of methods for the BiocCheck reference class
 }
 \section{methods}{
 
-\describe{
-\item{add}{ Include a condition to the \code{BiocCheck} report }
-\item{getLastCheck}{ Obtain the name of the last check run }
-\item{setCheck}{ Create a new element in the internal list for a check }
-\item{get}{ Extract the list of conditions raised by \code{BiocCheck} }
-\item{getNum}{ Tally the number of condition provided by the input }
-\item{zero}{ Reset the internal log of the condition provided }
-\item{getBiocCheckDir}{ Report and create the \verb{<package>.BiocCheck}
-directory as obtained from the metadata }
-\item{composeReport}{ Simplify the list structure from the \code{log} and
-provide a character vector of conditions raised }
-\item{report}{ Write the \verb{00BiocCheck.log} report into the \code{BiocCheck}
-folder }
-\item{toJSON}{ Write a JSON file to the location indicated with the
-conditions raised }
-\item{fromJSON}{ Read a JSON file from the location indicated with the
-output of previous conditions raised in the check }
-\item{show}{ Display the information in the class. Currently empty. }
-\item{show_meta}{ Display the metadata information stored in the \code{metadata}
-field }
+\itemize{
+\item \code{add}: Include a condition to the \code{BiocCheck} report
+\item \code{getLastCheck}: Obtain the name of the last check run
+\item \code{setCheck}: Create a new element in the internal list for a check
+\item \code{get}: Extract the list of conditions raised by \code{BiocCheck}
+\item \code{getNum}: Tally the number of condition provided by the input
+\item \code{zero}: Reset the internal log of the condition provided
+\item \code{addMetadata}: Add metadata to the \code{BiocCheck} object from a
+\code{BiocPackage} object
+\item \code{getBiocCheckDir}: Report and create the \verb{<package>.BiocCheck}
+directory as obtained from the metadata
+\item \code{composeReport}: Simplify the list structure from the \code{log} and
+provide a character vector of conditions raised
+\item \code{report}: Write the \verb{00BiocCheck.log} report into the \code{BiocCheck}
+folder
+\item \code{toJSON}: Write a JSON file to the location indicated with the
+conditions raised
+\item \code{fromJSON}: Read a JSON file from the location indicated with the
+output of previous conditions raised in the check
+\item \code{show}: Display the information in the class. Currently empty.
+\item \code{show_meta}: Display the metadata information stored in the \code{metadata}
+field
 }
 }
 

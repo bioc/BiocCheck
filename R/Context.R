@@ -8,7 +8,7 @@
 #'
 #' @param lines character() vector of text lines in file
 #'
-#' @param idx logical() same length as \code{lines} indicating lines in which
+#' @param idx logical() same length as `lines` indicating lines in which
 #'   event occurs
 #'
 #' @param offset `integer(1)` The number of lines to add to the 'Line' column

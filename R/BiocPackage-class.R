@@ -65,6 +65,24 @@
 #'
 #' @keywords internal
 #'
+#' @section methods:
+#'
+#' * `initialize`: Initialize a `BiocPackage` object
+#' * `getPackageDir`: Get the package directory
+#' * `getRSources`: Get the R source files
+#' * `getVigSources`: Get the vignette source files
+#' * `getManSources`: Get the Rd source files
+#' * `getBiocCheckDir`: Get the directory where the BiocCheck logs are written
+#' * `getBiocViews`: Get the `biocViews` field from the `DESCRIPTION` file
+#' * `getPackageType`: Get the package type based on the `biocViews` field
+#' * `readDESCRIPTION`: Read the `DESCRIPTION` file
+#' * `getVigBuilder`: Get the vignette builder
+#' * `getAllDependencies`: Get all dependencies from the `DESCRIPTION` file
+#' * `findInfrastructure`: Is the package an infrastructure package?
+#' * `findRoxygen`: Does the package use `roxygen2`?
+#' * `getPackageVersion`: Get the package version
+#' * `untarTarball`: Untar the source tarball
+#'
 #' @examples
 #'
 #' # Create a BiocPackage object
