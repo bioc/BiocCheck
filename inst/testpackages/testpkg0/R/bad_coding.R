@@ -62,10 +62,14 @@ bad_assignment <- function() {
     value = "there is a equals assignment operator"
 }
 
-## This should not trigger 
+## This should not trigger
 check_install <- function(pkg) {
     instPkgs <- installed.packages()
     pkg %in% rownames(instPkgs)
+}
+
+running_system <- function() {
+    system("whoami")
 }
 
 check_inst_pkg <- function(pkg = "getPass") {

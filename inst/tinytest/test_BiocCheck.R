@@ -149,7 +149,7 @@ checkCounter(
 .BiocCheck$zero()
 
 .bioctest <- read_test_package("testpkg0")
-BiocCheck:::checkVigTypeRNW(.bioctest$VigSources)
+BiocCheck:::checkVigTypeRNW(.bioctest)
 expect_equivalent(
     .BiocCheck$getNum("warning"), 1L,
     info = "check for Rnw vignettes, warn if any"
@@ -167,11 +167,18 @@ expect_equivalent(
         )
     }
 )
-BiocCheck:::checkVignetteDir(.bioctest)
-expect_identical(
-    .BiocCheck$getNum(c("error", "warning", "note")),
-    c(error = 1L, warning = 2L, note = 1L),
-    "vignette builder ERROR, Rmd recommend, no builder in DESCRIPTION"
+expect_silent(
+    BiocCheck:::checkVigBuilder(.bioctest)
+)
+BiocCheck:::checkVigTypeRNW(.bioctest)
+expect_equivalent(
+    .BiocCheck$getNum("warning"), 1L
+)
+.BiocCheck$zero()
+
+BiocCheck:::checkVigSessionInfo(.bioctest)
+expect_equivalent(
+    .BiocCheck$getNum("note"), 1L
 )
 .BiocCheck$zero()
 
@@ -189,8 +196,8 @@ expect_identical(
 BiocCheck:::checkVignetteDir(.bioctest)
 expect_identical(
     .BiocCheck$getNum(c("error", "warning", "note")),
-    c(error = 1L, warning = 2L, note = 1L),
-    "VigBuilder ERROR, Rmd recommend, no builder in DESCRIPTION"
+    c(error = 0L, warning = 2L, note = 1L),
+    "Rmd recommend, no builder in DESCRIPTION"
 )
 .BiocCheck$zero()
 
@@ -444,6 +451,16 @@ BiocCheck:::checkBadFiles(.bioctest)
 expect_equivalent(1, .BiocCheck$getNum("error"))
 .BiocCheck$zero()
 unlink(temp_dir, recursive = TRUE)
+
+# checkSystemCalls --------------------------------------------------------
+.bioctest <- read_test_package("testpkg0")
+msg <- BiocCheck:::findSymbolsInRFiles(
+    .BiocPackage, "system", "SYMBOL_FUNCTION_CALL"
+)
+## use tinytest:: until fixed in
+## https://github.com/markvanderloo/tinytest/issues/124
+tinytest::expect_match(msg, "system\\(\\) in R/bad_coding\\.R.*")
+.BiocCheck$zero()
 
 # checkLicenseForRestrictiveUse -------------------------------------------
 BiocCheck:::checkLicenseForRestrictiveUse("GPL-3.0")

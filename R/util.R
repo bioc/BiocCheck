@@ -332,25 +332,24 @@ getBadDeps <- function(pkgdir, lib.loc)
         env="R_DEFAULT_PACKAGES=NULL")
 }
 
-getVigEngine <- function(vignetteFile){
+getVigEngine <- function(vignetteFile) {
     lines <- readLines(vignetteFile, n=100L, warn=FALSE)
     vigEngine <- grep(lines, pattern="VignetteEngine", value = TRUE)
     vigEngine <- trimws(vigEngine)
-    if (length(vigEngine)) {
-        ve <- gsub("%\\s*\\\\VignetteEngine\\{(.*)\\}", "\\1", vigEngine)
-        head(strsplit(ve, "::", fixed = TRUE)[[1L]], 1L)
-    } else {
-        NA
-    }
+    gsub("%\\s*\\\\VignetteEngine\\{(.*)\\}", "\\1", vigEngine)
 }
 
-vigHelper <- function(vignetteFile, builder){
-    eng <- getVigEngine(vignetteFile)
-    if (all(is.na(eng))){
-        return(NA)
-    } else {
-        return(all(eng %in% builder))
-    }
+getVigEnginePkg <- function(vignetteFile) {
+    vigEngineField <- getVigEngine(vignetteFile)
+    if (length(vigEngineField))
+        head(strsplit(vigEngineField, "::", fixed = TRUE)[[1L]], 1L)
+    else
+        NA_character_
+}
+
+isEngineInBuilder <- function(vignetteFile, builder) {
+    eng <- getVigEnginePkg(vignetteFile)
+    !is.na(eng) && eng %in% builder
 }
 
 .load_data <- function(dataname, package) {

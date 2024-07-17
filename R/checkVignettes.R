@@ -24,7 +24,7 @@ checkVignetteDir <- function(.BiocPackage)
 
     checkVigMetadata(vigdircontents)
 
-    checkVigTypeRNW(vigdircontents)
+    checkVigTypeRNW(.BiocPackage)
 
     checkVigEngine(.BiocPackage)
 
@@ -99,22 +99,26 @@ checkVigFiles <- function(.BiocPackage) {
 
 checkVigBuilder <- function(.BiocPackage)
 {
-    builder <- .BiocPackage$VigBuilder
-    if (!length(builder))
+    builders <- .BiocPackage$VigBuilder
+    builders <- builders[builders != "Sweave"]
+    if (!length(builders))
         return()
     vigdircontents <- .BiocPackage$VigSources
     # check DESCRIPTION is in at least one vignette
     vigExt <- tolower(tools::file_ext(vigdircontents))
+    vigdircontents <- vigdircontents[vigExt != "rnw"]
+
     badBuilder <- character(0)
-    for (desc in builder){
-        res <- vapply(vigdircontents, vigHelper, logical(1), builder = desc)
-        if(!any(res, na.rm=TRUE)){
-            if (!(desc == "Sweave" && any(vigExt == "rnw"))){
-                badBuilder <- c(badBuilder, desc)
-            }
+    for (builder in builders) {
+        res <- vapply(
+            vigdircontents, isEngineInBuilder, logical(1), builder = builder
+        )
+        if (any(!res, na.rm=TRUE)) {
+            badBuilder <- c(badBuilder, builder)
         }
     }
-    if (length(badBuilder) != 0L){
+    # check if a listed builder is not found in any vignette
+    if (length(badBuilder)) {
         handleError(
             "'VignetteBuilder' listed in DESCRIPTION but not ",
             "found as 'VignetteEngine' in any vignettes:",
@@ -123,7 +127,8 @@ checkVigBuilder <- function(.BiocPackage)
     }
 }
 
-checkVigTypeRNW <- function(vigdircontents) {
+checkVigTypeRNW <- function(.BiocPackage) {
+    vigdircontents <- .BiocPackage$VigSources
     vigExt <- tolower(tools::file_ext(vigdircontents))
     isRNW <- vigExt == "rnw"
     vigNames <- basename(vigdircontents[isRNW])
@@ -163,40 +168,43 @@ checkVigEngine <- function(.BiocPackage)
     vigdircontents <- .BiocPackage$VigSources
     # check Engines are in DESCRIPTION
     vigExt <- tolower(tools::file_ext(vigdircontents))
-    dx <- which(vigExt != "rnw")
+    vigdircontents <- vigdircontents[vigExt != "rnw"]
 
-    # check for very rare case that mulitple build
+    # check for very rare case that multiple build
     # engines specified in vignette
-    builderRes <- grepPkgDir(file.path(dirname(vigdircontents[1]),
-                                       .Platform$file.sep),
-                             "-rHn 'VignetteEngine{'")
-    filenames <- vapply(builderRes,
-                        FUN=function(x){strsplit(x,
-                            split=" ")[[1]][1]},
-                        character(1))
-    inval <- names(which(table(filenames) > 1))
-    if (length(inval)){
+    res <- lapply(vigdircontents, getVigEngine)
+    if (any(lengths(res) > 1L)) {
         handleErrorFiles(
             "More than one VignetteEngine specified.",
-            help_text = "Found in vignette/files:",
-            messages = inval
+            messages = names(which(lengths(res) > 1L))
         )
-        dx <- dx[!(basename(vigdircontents[dx]) %in% inval)]
     }
-    if (length(dx) != 0) {
-        res <-
-            vapply(vigdircontents[dx], vigHelper, logical(1), builder=builder)
-        if (length(which(!res)) != 0L){
+    # check for missing engine
+    if (any(!lengths(res))) {
+        handleError(
+            "No 'VignetteEngine' specified in vignette.",
+            help_text = "Add 'VignetteEngine' to the following files:",
+            messages = names(res[!lengths(res)])
+        )
+    }
+    vigdircontents <- vigdircontents[lengths(res) == 1L]
+    if (length(vigdircontents)) {
+        res <- vapply(
+            vigdircontents, isEngineInBuilder, logical(1), builder = builder
+        )
+        # check for missing engine in DESCRIPTION
+        if (any(!res)) {
             handleError(
                 "'VignetteEngine' specified but not in the DESCRIPTION.",
                 help_text =
                     "Add 'VignetteEngine' to DESCRIPTION from the following:",
-                messages = basename(names(which(!res)))
+                messages = names(res[!res])
             )
         }
-        nadx <- which(is.na(res))
-        if (length(nadx) != 0L || is.null(builder)){
-            files <- res[nadx]
+        # check for missing engine in vignette
+        if (anyNA(res)) {
+            nadx <- which(is.na(res))
+            files <- names(res[nadx])
             if (is.null(builder))
                 files <- c(files, "DESCRIPTION")
             handleError(
@@ -205,7 +213,7 @@ checkVigEngine <- function(.BiocPackage)
                     "Add a 'VignetteEngine' to the following files or",
                     "a default 'VignetteBuilder' in DESCRIPTION: "
                 ),
-                messages = basename(names(files))
+                messages = files
             )
         }
     }
@@ -423,7 +431,7 @@ quiet_knitr_purl <- function(...)
 }
 
 purl_or_tangle <- function(input, output, quiet, ...) {
-    vigEng <- getVigEngine(input)
+    vigEng <- getVigEnginePkg(input)
     vigExt <- tolower(tools::file_ext(input))
     if (!identical(vigExt, "rnw") || identical(vigEng, "knitr"))
         quiet_knitr_purl(input = input, output = output, quiet = quiet, ...)

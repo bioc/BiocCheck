@@ -1,5 +1,6 @@
 %\VignetteIndexEntry{A new Title}
 %\VignetteEngine{ThisWillFail}
+%\VignetteEngine{MultipleVigEngineLines}
 
 ```{r echo=FALSE}
 vl <- T

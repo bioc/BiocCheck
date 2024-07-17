@@ -92,7 +92,9 @@ checkCodingPractice <- function(.BiocPackage, parsedCode)
     }
 
     # system() vs system2()
-    msg_sys <- checkSystemCall(pkgdir)
+    msg_sys <- findSymbolsInRFiles(
+        .BiocPackage, "system", "SYMBOL_FUNCTION_CALL"
+    )
     if(length(msg_sys)) {
         handleNoteFiles(
             " Avoid system() ; use system2()",
@@ -436,13 +438,6 @@ checkClassNEEQLookup <- function(.BiocPackage) {
         )
     }, framelist = NEEQ_pres)
     unlist(msg_neeq)
-}
-
-## TODO: avoid grepPkgDir
-checkSystemCall <- function(pkgdir){
-
-    pkgdir <- sprintf("%s%s", pkgdir, .Platform$file.sep)
-    msg_sys <- grepPkgDir(pkgdir, "-rHn '^system(.*'")
 }
 
 checkExternalData <- function(.BiocPackage) {
