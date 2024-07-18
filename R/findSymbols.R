@@ -1,3 +1,34 @@
+.getTokenTextCode <- function(
+    parsedf, token, text, notLookback = character(0), hasLookback = character(0)
+) {
+    cond <- parsedf$token %in% token & parsedf$text %in% text
+    if (length(notLookback) && any(cond)) {
+        rangeLookback <- seq(which(cond) - length(notLookback), which(cond))
+        cond[cond] <- !setequal(
+            parsedf$text[rangeLookback], c(notLookback, text)
+        )
+    }
+    if (length(hasLookback) && any(cond)) {
+        rangeLookback <- seq(which(cond) - length(hasLookback), which(cond))
+        cond[cond] <- setequal(
+            parsedf$text[rangeLookback], c(hasLookback, text)
+        )
+    }
+    parsedf[
+        cond,
+        c("line1", "col1", "token", "text"),
+        drop = FALSE
+    ]
+}
+
+.grepTokenTextCode <- function(parsedf, token, text) {
+    parsedf[
+        parsedf$token %in% token & grepl(text, parsedf$text),
+        c("line1", "col1", "token", "text"),
+        drop = FALSE
+    ]
+}
+
 findSymbolInParsedCode <-
     function(parsedCode, pkgname, symbolName, token, silent=FALSE)
 {
@@ -108,7 +139,7 @@ findSymbolsInRFiles <-
 }
 
 findSymbolsInVignettes <-
-    function(.BiocPackage, Symbols, tokenTypes, FUN = .getTokenTextCode)
+    function(.BiocPackage, Symbols, tokenTypes, FUN = .getTokenTextCode, ...)
 {
     vigfiles <- .BiocPackage$VigSources
     shortnames <- .getDirFiles(vigfiles)
@@ -118,7 +149,7 @@ findSymbolsInVignettes <-
         tempR <- tempfile(fileext=".R")
         try_purl_or_tangle(input = vigfiles[i], output = tempR, quiet = TRUE)
         pfile <- parseFile(.BiocPackage, tempR)
-        tokens <- FUN(pfile, tokenTypes, Symbols)
+        tokens <- FUN(pfile, tokenTypes, Symbols, ...)
         viglist[[shortName]] <- sprintf(
             "%s (code line %d, column %d)",
             shortName, tokens[,"line1"], tokens[,"col1"]

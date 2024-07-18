@@ -329,14 +329,33 @@ checkVigChunkEval <- function(vigdircontents)
 }
 
 checkVigEvalAllFalse <- function(.BiocPackage) {
-    msg_eval <- grepPkgDir(
-        .BiocPackage$vignettesDir,
-        "-rHn 'knitr::opts_chunk\\$set(.*eval\\s*=\\s*F'"
+    vigfiles <- .BiocPackage$VigSources
+    shortnames <- .getDirFiles(vigfiles)
+    viglist <- structure(
+        vector("logical", length(vigfiles)), .Names = shortnames
     )
-    if (length(msg_eval)) {
+    for (i in seq_along(vigfiles)) {
+        shortName <- shortnames[i]
+        tempR <- tempfile(fileext=".R")
+        try_purl_or_tangle(input = vigfiles[i], output = tempR, quiet = TRUE)
+        pfile <- parseFile(.BiocPackage, tempR)
+        symbolOK <- .getTokenTextCode(
+            parsedf = pfile,
+            token = "SYMBOL_FUNCTION_CALL",
+            text = "set",
+            hasLookback = c("opts_chunk", "$")
+        )
+        if (nrow(symbolOK)) {
+            setRange <- .findSymbolRanges(pfile, "set", "SYMBOL_FUNCTION_CALL")
+            datarange <- pfile[unlist(setRange), ]
+            viglist[[shortName]] <-
+                grepl("eval=F", paste(datarange$text, collapse = ""))
+        }
+    }
+    if (any(viglist)) {
         handleWarningFiles(
             " Vignette set global option 'eval=FALSE'",
-            messages = msg_eval
+            messages = names(viglist[viglist])
         )
     }
 }

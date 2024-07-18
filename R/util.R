@@ -258,65 +258,10 @@ getAllDeprecatedPkgs <- function()
     }, character(1L))
 }
 
-.getTokenTextCode <- function(parsedf, token, text, lookback = character(0)) {
-    cond <- parsedf$token %in% token & parsedf$text %in% text
-    if (length(lookback))
-        cond[cond] <- parsedf$token[which(cond) - 1] != lookback
-    parsedf[
-        cond,
-        c("line1", "col1", "token", "text"),
-        drop = FALSE
-    ]
-}
-
-.grepTokenTextCode <- function(parsedf, token, text) {
-    parsedf[
-        parsedf$token %in% token & grepl(text, parsedf$text),
-        c("line1", "col1", "token", "text"),
-        drop = FALSE
-    ]
-}
-
 docType <- function(rd, tags) {
     if (missing(tags))
         tags <- tools:::RdTags(rd)
     .tagsExtract(rd, tags, "\\docType")
-}
-
-grepPkgDir <- function(pkgdir, greparg, full_path=FALSE){
-    args <- sprintf("%s %s*", greparg, pkgdir)
-    fnd <- tryCatch(
-        system2("grep", args, stdout=TRUE),
-        warning=function(w){character()},
-        error=function(e){character(0)})
-    msg_files <- vapply(fnd,
-                        FUN=function(x, pkgdir){
-                            vl <- strsplit(x, split=":")
-                            filename <-
-                                if(full_path){
-                                    vl[[1]][1]
-                                } else {
-                                    sub(vl[[1]][1], pattern=pkgdir,
-                                        replacement="", fixed=TRUE)
-                                }
-                            lineNum <- vl[[1]][2]
-                            if (tolower(.Platform$OS.type) == "windows"){
-                                filename <-
-                                    if(full_path){
-                                        paste(vl[[1]][1], vl[[1]][2], sep=":")
-                                    }else {
-                                        sub(
-                                            paste(vl[[1]][1], vl[[1]][2], sep=":"),
-                                            pattern=pkgdir, replacement="",
-                                            fixed=TRUE)
-                                    }
-                                lineNum <- vl[[1]][3]
-                            }
-                            sprintf("%s (line %s)", filename, lineNum)},
-                        FUN.VALUE = character(1),
-                        c(pkgdir=pkgdir),
-                        USE.NAMES=FALSE)
-    msg_files
 }
 
 getBadDeps <- function(pkgdir, lib.loc)

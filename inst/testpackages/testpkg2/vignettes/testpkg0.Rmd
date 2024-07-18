@@ -2,9 +2,24 @@
 %\VignetteEngine{ThisWillFail}
 %\VignetteEngine{MultipleVigEngineLines}
 
+```{r}
+knitr::opts_chunk$set(
+    cache = TRUE,
+    eval = FALSE
+)
+```
+
 ```{r echo=FALSE}
 vl <- T
 ```
 
 ```R
+```
+
+```{r,eval=FALSE}
+# this is a test
+```
+
+```{r,eval=FALSE}
+# to increase proportion of eval = FALSE
 ```

@@ -235,11 +235,26 @@ expect_true(
 )
 .BiocCheck$zero()
 
+BiocCheck:::checkVigEvalAllFalse(.bioctest)
+expect_equivalent(
+    .BiocCheck$getNum("warning"), 1L
+)
+expect_true(
+    any(
+        grepl(
+            "evalfalse.Rmd",
+            .BiocCheck$get("warning")[["checkVigEvalAllFalse"]]
+        )
+    )
+)
+.BiocCheck$zero()
+
+
 .bioctest <- read_test_package("testpkg2")
 BiocCheck:::checkVignetteDir(.bioctest)
 expect_identical(
     .BiocCheck$getNum(c("error", "warning", "note")),
-    c(error = 2L, warning = 4L, note = 2L),
+    c(error = 2L, warning = 5L, note = 2L),
     "check vignette style of example pkg; vignette metadata"
 )
 expect_true(
@@ -281,8 +296,23 @@ expect_identical(
     "check vignette intermediate files"
 )
 .BiocCheck$zero()
-unlink(temp_dir, recursive = TRUE)
 
+BiocCheck:::checkVigEvalAllFalse(.bioctest)
+expect_equivalent(
+    .BiocCheck$getNum("warning"), 1L
+)
+expect_true(
+    any(
+        grepl(
+            "vignettes/testpkg0.Rmd",
+            .BiocCheck$get("warning")[["checkVigEvalAllFalse"]],
+            fixed = TRUE,
+        )
+    )
+)
+.BiocCheck$zero()
+
+unlink(temp_dir, recursive = TRUE)
 
 # checkVersionNumber ------------------------------------------------------
 temp_dir <- tempdir()

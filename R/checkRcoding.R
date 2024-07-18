@@ -71,7 +71,7 @@ checkCodingPractice <- function(.BiocPackage, parsedCode)
 
     # T/F
     msg_tf <- findSymbolsInRFiles(
-        .BiocPackage, c("T", "F"), "SYMBOL", lookback = "'$'"
+        .BiocPackage, c("T", "F"), "SYMBOL", notLookback = "$"
     )
     if (length(msg_tf)) {
         handleWarning(
