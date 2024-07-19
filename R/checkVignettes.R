@@ -347,6 +347,8 @@ checkVigEvalAllFalse <- function(.BiocPackage) {
         )
         if (nrow(symbolOK)) {
             setRange <- .findSymbolRanges(pfile, "set", "SYMBOL_FUNCTION_CALL")
+            if (length(setRange) > 1L)
+                warning("More than one `opts_chunk$set()` in ", vigfiles[i])
             datarange <- pfile[unlist(setRange), ]
             viglist[[shortName]] <-
                 grepl("eval=F", paste(datarange$text, collapse = ""))
