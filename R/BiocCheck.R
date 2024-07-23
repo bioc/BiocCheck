@@ -147,9 +147,10 @@ BiocCheckRun <-
     )
 
     ## consider merging these operations into one
-    handleMessage("* Installing package...", indent = 0, exdent = 0)
-
+    cli::cli_div(theme = list(.pkg = list(color = "orange")))
+    cli::cli_rule("Installing {.pkg { .BiocPackage$packageName }}")
     package_install_dir <- installAndLoad(.BiocPackage)
+    cli::cli_alert_success("Package installed successfully")
     libloc <- file.path(package_install_dir, "lib")
     isBBS <- Sys.getenv("IS_BIOC_BUILD_MACHINE")
     onBBS <- nzchar(isBBS) && identical(tolower(isBBS), "true")
@@ -158,7 +159,9 @@ BiocCheckRun <-
     .BiocCheck$addMetadata(
         BiocPackage = .BiocPackage, installDir = package_install_dir
     )
+    cli::cli_rule("{.pkg { .BiocPackage$packageName }} session metadata")
     .BiocCheck$show_meta()
+    cli::cli_rule("Running BiocCheck on {.pkg { .BiocPackage$packageName }}")
 
     # BiocCheck checks --------------------------------------------------------
     if (is.null(dots[["no-check-deprecated"]])) {
@@ -216,7 +219,9 @@ BiocCheckRun <-
         result <- checkBiocViews(.BiocPackage)
         if(result)
         {
-            .msg("Search 'biocViews' at https://contributions.bioconductor.org")
+            cli::cli_alert_info(
+                "Search 'biocViews' at https://contributions.bioconductor.org"
+            )
         }
     }
 
@@ -337,18 +342,22 @@ BiocCheckRun <-
         checkForSupportSiteRegistration(.BiocPackage)
     }
 
-    # BiocCheck results -------------------------------------------------------
-    message("\n\U2500 BiocCheck results \U2500\U2500")
-    .msg(
-        "%d ERRORS | %d WARNINGS | %d NOTES",
-        .BiocCheck$getNum("error"),
-        .BiocCheck$getNum("warning"),
-        .BiocCheck$getNum("note")
+    cli::cli_rule(
+        left = paste0("BiocCheck v", packageVersion("BiocCheck"), " results")
     )
-    message(
-        "\nSee the ", package_name, ".BiocCheck folder and run\n",
-        "    browseVignettes(package = 'BiocCheck')\n",
-        "for details."
+    cli::cli_text(
+        paste0(
+            "{symbol$cross} { .BiocCheck$getNum('error') } ERRORS | ",
+            "{symbol$warning} { .BiocCheck$getNum('warning') } WARNINGS | ",
+            "{symbol$bullet} { .BiocCheck$getNum('note') } NOTES\n"
+        )
+    )
+    cli::cli_alert_info(
+        paste0(
+            "\nSee the { .BiocPackage$packageName }.BiocCheck folder and run\n",
+            "  browseVignettes(package = 'BiocCheck')\n",
+            "  for details."
+        )
     )
 
     .BiocCheck$report(debug, onBBS)

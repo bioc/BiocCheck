@@ -28,6 +28,7 @@ Imports:
     BiocManager,
     biocViews,
     callr,
+    cli,
     codetools,
     graph,
     httr2,

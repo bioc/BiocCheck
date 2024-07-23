@@ -162,8 +162,7 @@ NULL
             stopifnot(
                 "<Internal> Input to '$add' must be a list" = is.list(mlist)
             )
-            dots <- sprintf(paste0("* ", toupper(condition), ": %s"), mlist)
-            ins <- Filter(length, list(dots, help_text, messages))
+            ins <- Filter(length, list(mlist, help_text, messages))
             nist <- structure(list(ins), .Names = names(mlist))
             .messages$setMessage(nist, verbose = verbose, condition = condition)
             .self[[condition]] <- append(.self[[condition]], nist)
@@ -269,15 +268,29 @@ NULL
         show_meta = function() {
             meta <- .self$metadata
             if (!length(meta))
-                stop("No metadata to show.")
-            message(
-                paste0(
-                    "\U2500", " ", paste(names(meta), meta, sep = ": "), "\n"
-                )
+                stop("<Internal> No metadata to show.")
+            lapply(
+                paste(names(meta), meta, sep = ": "),
+                cli::cli_alert
             )
         }
     )
 )
+
+cli_warning <- function(...) {
+    cli::cli_div(theme = list(.warning = list(color = "orange")))
+    cli::cli_alert_warning(paste0("{.warning W: ", ..., "}"))
+}
+
+cli_error <- function(...) {
+    cli::cli_div(theme = list(.error = list(color = "red")))
+    cli::cli_alert_danger(paste0("{.error E: ", ..., "}"))
+}
+
+cli_note <- function(...) {
+    cli::cli_div(theme = list(.note = list(color = "blue")))
+    cli::cli_alert_info(paste0("{.note N: ", ..., "}"))
+}
 
 # Message-class -----------------------------------------------------------
 
@@ -332,10 +345,16 @@ NULL
         setMessage = function(..., verbose = FALSE, condition) {
             text <- list(...)[[1L]]
             .self$setCondition(condition)
+            clifun <- switch(
+                condition,
+                error = cli_error,
+                warning = cli_warning,
+                note = cli_note
+            )
             .self$msg <- append(.self$msg, text)
             if (!verbose) {
-                handleMessage(
-                    head(unlist(text, use.names = FALSE), 1L), indent = 4
+                clifun(
+                    head(unlist(text, use.names = FALSE), 1L)
                 )
             } else {
                 lens <- lengths(text)
@@ -344,9 +363,8 @@ NULL
                     unlist(tail(text[[1]], 1L))
                 )
                 mapply(
-                    handleMessage,
-                    unlist(text, recursive = FALSE, use.names = FALSE),
-                    indent = indents
+                    clifun,
+                    unlist(text, recursive = FALSE, use.names = FALSE)
                 )
             }
             .self$msg

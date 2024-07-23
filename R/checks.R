@@ -169,7 +169,7 @@ checkBiocViews <- function(.BiocPackage)
 
     handleCheck("Checking package type based on biocViews...")
     type <- guessPackageType(views)
-    handleMessage(type)
+    cli::cli_alert(type)
     handleCheck("Checking for non-trivial biocViews...")
     toplevel <- c("Software", "AnnotationData", "ExperimentData", "Workflow")
     if (all(views %in% toplevel)) {

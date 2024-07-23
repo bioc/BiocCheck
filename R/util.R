@@ -14,27 +14,6 @@ NULL
 
 .stop <- function(...) stop(noquote(sprintf(...)), call.=FALSE)
 
-.verbatim <-
-    function(..., appendLF=TRUE, indent=6, exdent=8, width=getOption("width"))
-{
-    ## don't wrap elements of msg; indent first line by 'indent',
-    ## subsequent lines by 'exdent'
-    txt <- sprintf(...)
-    if (length(txt)) {
-        prefix <- paste(rep(" ", indent), collapse="")
-        txt[1] <- paste0(prefix, txt[1])
-    }
-    if (length(txt) > 1L) {
-        prefix <- paste(rep(" ", exdent), collapse="")
-        txt[-1] <- paste0(prefix, txt[-1])
-    }
-    txt <- ifelse(
-        (!is.na(txt)) & (nchar(txt) > width),
-        sprintf("%s...", substr(txt, 1, width - 3)),
-        txt)
-    message(paste(txt, collapse="\n"), appendLF=appendLF)
-}
-
 handleCondition <-
     function(
         ..., condition, help_text = character(0L),
@@ -52,11 +31,12 @@ handleCondition <-
     .BiocCheck$log
 }
 
+#' @importFrom cli symbol
 handleCheck <- function(..., appendLF=TRUE)
 {
-    msg <- sprintf("* %s", paste0(...))
+    msg <- paste0(...)
     .BiocCheck$setCheck(msg)
-    .msg(msg, appendLF=appendLF)
+    cli::cli_progress_step(msg = msg)
 }
 
 handleError <- function(...)
@@ -89,12 +69,7 @@ handleNoteFiles <- function(..., help_text = "Found in files:") {
 handleMessage <- function(..., indent=4, exdent=6)
 {
     msg <- paste0(...)
-    .msg("  %s", msg, indent=indent, exdent=exdent)
-}
-
-handleVerbatim <- function(msg, indent=4, exdent=6, width=getOption("width"))
-{
-    .verbatim("%s", msg, indent=indent, exdent=exdent, width=width)
+    cli::cli_alert_info(msg)
 }
 
 installAndLoad <- function(.BiocPackage, install_dir = tempfile())
