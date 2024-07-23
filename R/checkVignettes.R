@@ -224,7 +224,7 @@ checkVigSuggests <- function(.BiocPackage)
     builder <- .BiocPackage$VigBuilder
     vigdircontents <- .BiocPackage$VigSources
     vigExt <- tolower(tools::file_ext(vigdircontents))
-    res <- lapply(vigdircontents, getVigEngine)
+    res <- lapply(vigdircontents, getVigEnginePkg)
     lst <- unique(c(unlist(unname(res)), builder))
     if (any(is.na(lst)))
         lst <- lst[!is.na(lst)]
