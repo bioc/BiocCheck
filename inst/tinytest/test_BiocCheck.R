@@ -485,11 +485,23 @@ unlink(temp_dir, recursive = TRUE)
 # checkSystemCalls --------------------------------------------------------
 .bioctest <- read_test_package("testpkg0")
 msg <- BiocCheck:::findSymbolsInRFiles(
-    .BiocPackage, "system", "SYMBOL_FUNCTION_CALL"
+    .bioctest, "system", "SYMBOL_FUNCTION_CALL"
 )
 ## use tinytest:: until fixed in
 ## https://github.com/markvanderloo/tinytest/issues/124
 tinytest::expect_match(msg, "system\\(\\) in R/bad_coding\\.R.*")
+.BiocCheck$zero()
+
+# check T / F usage -------------------------------------------------------
+msg <- BiocCheck:::findSymbolsInRFiles(
+    .bioctest, c("T", "F"), "SYMBOL", notLookback = "$"
+)
+expect_equivalent(
+    sum(grepl("R/TFindex.R", msg)), 4L
+)
+expect_equivalent(
+    sum(grepl("R/morecode.R", msg)), 2L
+)
 .BiocCheck$zero()
 
 # checkLicenseForRestrictiveUse -------------------------------------------

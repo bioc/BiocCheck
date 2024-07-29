@@ -1,4 +1,4 @@
-.filter_lookback <- function(index, parsedDF, lookback) {
+.filter_lookback <- function(index, parsedDF, lookback, text) {
     vapply(index, function(idx) {
         rangeLookback <- seq(idx - length(lookback), idx)
         setequal(
@@ -12,10 +12,10 @@
 ) {
     cond <- parsedf$token %in% token & parsedf$text %in% text
     if (length(notLookback) && any(cond)) {
-        cond[cond] <- !.filter_lookback(which(cond), parsedf, notLookback)
+        cond[cond] <- !.filter_lookback(which(cond), parsedf, notLookback, text)
     }
     if (length(hasLookback) && any(cond)) {
-        cond[cond] <- .filter_lookback(which(cond), parsedf, hasLookback)
+        cond[cond] <- .filter_lookback(which(cond), parsedf, hasLookback, text)
     }
     parsedf[
         cond,
