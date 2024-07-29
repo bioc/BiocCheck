@@ -1,18 +1,21 @@
+.filter_lookback <- function(index, parsedDF, lookback) {
+    vapply(index, function(idx) {
+        rangeLookback <- seq(idx - length(lookback), idx)
+        setequal(
+            parsedDF$text[rangeLookback], c(lookback, text)
+        )
+    }, logical(1L))
+}
+
 .getTokenTextCode <- function(
     parsedf, token, text, notLookback = character(0), hasLookback = character(0)
 ) {
     cond <- parsedf$token %in% token & parsedf$text %in% text
     if (length(notLookback) && any(cond)) {
-        rangeLookback <- seq(which(cond) - length(notLookback), which(cond))
-        cond[cond] <- !setequal(
-            parsedf$text[rangeLookback], c(notLookback, text)
-        )
+        cond[cond] <- !.filter_lookback(which(cond), parsedf, notLookback)
     }
     if (length(hasLookback) && any(cond)) {
-        rangeLookback <- seq(which(cond) - length(hasLookback), which(cond))
-        cond[cond] <- setequal(
-            parsedf$text[rangeLookback], c(hasLookback, text)
-        )
+        cond[cond] <- .filter_lookback(which(cond), parsedf, hasLookback)
     }
     parsedf[
         cond,
