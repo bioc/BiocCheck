@@ -64,7 +64,7 @@ checkCodingPractice <- function(.BiocPackage, parsedCode)
     msg_ss <- checkSignalerInSignaler(.BiocPackage)
     if (length(msg_ss)) {
         handleNoteFiles(
-            " Avoid redundant 'stop' and 'warn*' in signal conditions",
+            "Avoid redundant 'stop' and 'warn*' in signal conditions",
             messages = msg_ss
         )
     }
