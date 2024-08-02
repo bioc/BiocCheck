@@ -266,9 +266,9 @@ checkSingleColon <- function(.BiocPackage, avail_pkgs = character(0L)) {
     tokens[tokens[,"token"] != "expr", ,drop=FALSE]
 }
 
-.grepSymbolRanges <-
-    function(tokens, patterns, tokenType = "SYMBOL_FUNCTION_CALL", isExp = FALSE)
-{
+.grepSymbolRanges <- function(
+    tokens, patterns, tokenType = "SYMBOL_FUNCTION_CALL", isExp = FALSE
+) {
     txt <- tokens[, "text"]
     found <- lapply(patterns, function(pattern) grepl(pattern, txt))
     found <- Reduce(`|`, found)
@@ -411,7 +411,10 @@ checkSignalerInSignaler <- function(.BiocPackage) {
         EQblock <- tokens[startEQ:endEQ, ]
         hasIS <- EQblock[, "token"] == "SYMBOL_FUNCTION_CALL" &
             EQblock[, "text"] %in% c("is", "class")
-        if (any(hasIS) && "STR_CONST" %in% EQblock[EQblock[["rowID"]] > eq, "token"])
+        if (
+            any(hasIS) &&
+            "STR_CONST" %in% EQblock[EQblock[["rowID"]] > eq, "token"]
+        )
             eq
         else
             NULL
@@ -446,7 +449,10 @@ checkExternalData <- function(.BiocPackage) {
         tokens <- getParseData(parse(rfile, keep.source=TRUE))
         tokens <- tokens[tokens[,"token"] == "STR_CONST", ,drop=FALSE]
 
-        platforms <- "githubusercontent|github.*[^html\"]$|gitlab|bitbucket|[^\\.]dropbox"
+        platforms <- paste0(
+            "githubusercontent|github.*[^html\"]$|",
+            "gitlab|bitbucket|[^\\.]dropbox"
+        )
         txtkns <- tokens[, "text"]
         hits <- grepl(platforms, txtkns, ignore.case = TRUE) &
             grepl("dl|\\.\\w+\"$", txtkns)

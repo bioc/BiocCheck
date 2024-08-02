@@ -213,8 +213,10 @@ checkUsageOfDont <- function(.BiocPackage)
             keyword <- unlist(lapply(rd,
                 function(x) attr(x, "Rd_tag") == "\\keyword"))
             if (any(keyword)) {
-                internalVec <- vapply(as.character(rd[keyword]), grepl, logical(1),
-                                     pattern="internal", USE.NAMES=FALSE)
+                internalVec <- vapply(
+                    as.character(rd[keyword]), grepl, logical(1L),
+                    pattern="internal", USE.NAMES=FALSE
+                )
             } else {
                 internalVec <- FALSE
             }
