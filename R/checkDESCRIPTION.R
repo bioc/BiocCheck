@@ -28,6 +28,7 @@ checkDESCRIPTIONFile <- function(.BiocPackage) {
     checkDESCfields(dcf)
     checkBiocDepsDESC(dcf)
     checkPinnedDeps(dcf)
+    checkFndPerson(dcf)
 }
 
 checkRemotesUsage <- function(.BiocPackage)
@@ -116,19 +117,29 @@ checkVersionNumber <- function(.BiocPackage)
     }
 }
 
-.PersonAuthorsAtR <- function(dcf, errorFUN = function(e) return(NULL)) {
-    env <- new.env(parent=emptyenv())
+.PersonsFromDCF <- function(
+    dcf,
+    field = c("Authors@R", "Author"),
+    .dreturn = NULL
+) {
+    field <- match.arg(field)
+    if (identical(field, "Author"))
+        return(dcf[, field])
+    env <- new.env(parent = emptyenv())
     env[["c"]] <- c
     env[["person"]] <- utils::person
-    pp <- parse(text=dcf[,"Authors@R"], keep.source=TRUE)
+    pp <- parse(text = dcf[, field], keep.source = TRUE)
     tryCatch({
         eval(pp, env)
-    }, error = errorFUN)
+    }, error = function(e) {
+        .dreturn
+    })
 }
 
 .MainEmailAuthorsAtR <- function(dcf) {
     email <- NULL
-    people <- .PersonAuthorsAtR(dcf, errorFUN = function(e) return(NULL))
+    people <-
+        .PersonsFromDCF(dcf, "Authors@R", .dreturn = NULL)
     for (person in people) {
         if ("cre" %in% person$role) {
             email <- person$email
@@ -282,4 +293,14 @@ checkPinnedDeps <- function(dcf) {
     doubleeq <- grepl("==", dcf[, validdeps], fixed = TRUE)
     if (any(doubleeq))
         handleError("Dependencies in the DESCRIPTION file contain '=='")
+}
+
+checkFndPerson <- function(dcf) {
+    handleCheck("Checking for 'fnd' role in Authors@R...")
+    field <- if ("Authors@R" %in% colnames(dcf)) "Authors@R" else "Author"
+    people <- .PersonsFromDCF(dcf, field, .dreturn = "")
+    msg <- "No 'fnd' role found in Authors@R. If the work is supported
+        by a grant, consider adding the 'fnd' role to the list of authors."
+    if (!any(grepl("fnd", people, fixed = TRUE)))
+        handleNote(msg)
 }

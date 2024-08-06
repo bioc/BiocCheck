@@ -318,7 +318,7 @@ checkBBScompatibility <- function(.BiocPackage)
 
     maintainer <- NULL
     if ("Authors@R" %in% colnames(dcf)) {
-        people <- .PersonAuthorsAtR(dcf)
+        people <- .PersonsFromDCF(dcf)
         if (is.null(people) || !inherits(people, "person")) {
             handleError("Authors@R field must be valid 'person' object.")
             return()
