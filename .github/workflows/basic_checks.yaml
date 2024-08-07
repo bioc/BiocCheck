@@ -1,11 +1,11 @@
-name: Check, build, and test
+name: R CMD check
 
 on:
   push:
     branches:
       - devel
-    # paths:
-    #   - DESCRIPTION
+    paths:
+      - DESCRIPTION
   pull_request:
     branches:
       - devel
@@ -54,22 +54,3 @@ jobs:
         run: rcmdcheck::rcmdcheck(args = "--no-manual", error_on = "warning", check_dir = "check")
         shell: Rscript {0}
 
-      - name: Test coverage
-        run: |
-          covr::codecov(
-            quiet = FALSE,
-            clean = FALSE,
-            install_path = file.path(normalizePath(Sys.getenv("RUNNER_TEMP"), winslash = "/"), "package")
-          )
-        shell: Rscript {0}
-
-      - name: Show output
-        if: always()
-        run: |
-          find ${{ runner.temp }}/package -name 'tinytest.Rout*' -exec cat '{}' \; || true
-        shell: bash
-
-      - name: Upload coverage reports to Codecov
-        uses: codecov/codecov-action@v4.0.1
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
