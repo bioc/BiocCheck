@@ -2,14 +2,12 @@
 
 ---
 
-<!--- Start the badges section -->
-
+<!-- badges: start -->
 [![BioC status](http://www.bioconductor.org/shields/build/devel/bioc/BiocCheck.svg)](https://bioconductor.org/checkResults/devel/bioc-LATEST/BiocCheck)
 [![Platforms](http://www.bioconductor.org/shields/availability/devel/BiocCheck.svg)](https://www.bioconductor.org/packages/devel/bioc/html/BiocCheck.html#archives)
-[![codecov](https://codecov.io/gh/Bioconductor/BiocCheck/graph/badge.svg?token=RxCSmvax1C)](https://codecov.io/gh/Bioconductor/BiocCheck)
+[![Codecov test coverage](https://codecov.io/gh/Bioconductor/BiocCheck/graph/badge.svg)](https://app.codecov.io/gh/Bioconductor/BiocCheck)
 [![Downloads](http://www.bioconductor.org/shields/downloads/devel/BiocCheck.svg)](https://bioconductor.org/packages/stats/bioc/BiocCheck)
-
-<!--- End the badges section -->
+<!-- badges: end -->
 
 The `BiocCheck` package provides a set of tools for checking a package
 against the current version of Bioconductor coding and style standards.
