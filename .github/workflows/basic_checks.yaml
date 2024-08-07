@@ -69,9 +69,7 @@ jobs:
           find ${{ runner.temp }}/package -name 'tinytest.Rout*' -exec cat '{}' \; || true
         shell: bash
 
-      - name: Upload test results
-        if: failure()
-        uses: actions/upload-artifact@v3
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v4.0.1
         with:
-          name: coverage-test-failures
-          path: ${{ runner.temp }}/package
+          token: ${{ secrets.CODECOV_TOKEN }}
