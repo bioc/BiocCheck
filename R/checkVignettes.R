@@ -258,13 +258,13 @@ checkVigTemplate <- function(vigdircontents)
     }
     if (length(badVig))
         handleWarning(
-            "Vignette(s) still using 'VignetteIndexEntry{Vignette Title}' ",
+            "Vignette(s) still using 'VignetteIndexEntry{{Vignette Title}}' ",
             help_text = "The following files use template defaults:",
             messages = badVig
         )
     if (length(badVig2))
         handleWarning(
-            "Vignette(s) missing '\\%VignetteIndexEntry{Vignette Title}'. ",
+            "Vignette(s) missing '\\%VignetteIndexEntry{{Vignette Title}}'. ",
             help_text = "Update the following files:",
             messages = badVig2
         )
