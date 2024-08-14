@@ -4,9 +4,9 @@ on:
   push:
     branches:
       - devel
-  paths:
-    - 'DESCRIPTION'
-    - '**.yml'
+    paths:
+      - 'DESCRIPTION'
+      - '**.yml'
   pull_request:
     branches:
       - devel
