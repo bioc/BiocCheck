@@ -83,8 +83,11 @@ BiocCheckGitClone <- function(package=".", ...)
         dots <- dots[[1]]               # command line args come as list
 
     oldwarn <- getOption("warn")
-    on.exit(options(warn=oldwarn))
-    options(warn=1)
+    oldwidth <- getOption("cli.width")
+    on.exit({
+        options(warn = oldwarn, cli.width = oldwidth)
+    })
+    options(warn = 1, cli.width = 80)
 
     .BiocCheck$addMetadata(.BiocPackage)
     .BiocCheck$verbose <- TRUE
@@ -107,16 +110,18 @@ BiocCheckGitClone <- function(package=".", ...)
     checkForCitationFile(.BiocPackage)
 
     # BiocCheck results -------------------------------------------------------
-    message("\n\U2500 BiocCheck results \U2500\U2500")
-    .msg(
-        "%d ERRORS | %d WARNINGS | %d NOTES",
-        .BiocCheck$getNum("error"),
-        .BiocCheck$getNum("warning"),
-        .BiocCheck$getNum("note")
+    cli::cli_rule(
+        left = paste0("BiocCheck v", packageVersion("BiocCheck"), " results")
     )
-    message(
-        "\nFor more details, run\n",
-        "    browseVignettes(package = 'BiocCheck')"
+    cli::cli_text(
+        paste0(
+            "{symbol$cross} { .BiocCheck$getNum('error') } ERRORS | ",
+            "{symbol$warning} { .BiocCheck$getNum('warning') } WARNINGS | ",
+            "{symbol$bullet} { .BiocCheck$getNum('note') } NOTES\n"
+        )
+    )
+    cli::cli_alert_info(
+        "\nFor more details, run\n  browseVignettes(package = 'BiocCheck')"
     )
 
     if (isTRUE(dots[["quit-with-status"]])) {

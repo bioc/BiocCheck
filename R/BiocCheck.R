@@ -139,8 +139,11 @@ BiocCheckRun <-
         dots <- dots[[1]]               # command line args come as list
 
     oldwarn <- getOption("warn")
-    on.exit(options(warn=oldwarn))
-    options(warn=1)
+    oldwidth <- getOption("cli.width")
+    on.exit({
+        options(warn = oldwarn, cli.width = oldwidth)
+    })
+    options(warn = 1, cli.width = 80)
 
     .BiocPackage <- .BiocPackage$initialize(
         packageDir = package, checkDir = checkDir

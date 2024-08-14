@@ -69,7 +69,7 @@ handleNoteFiles <- function(..., help_text = "Found in files:") {
 handleMessage <- function(..., indent=4, exdent=6)
 {
     msg <- paste0(...)
-    cli::cli_alert_info(msg)
+    cli::cli_alert_info(msg, wrap = TRUE)
 }
 
 installAndLoad <- function(.BiocPackage, install_dir = tempfile())
