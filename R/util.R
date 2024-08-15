@@ -36,7 +36,10 @@ handleCheck <- function(..., appendLF=TRUE)
 {
     msg <- paste0(...)
     .BiocCheck$setCheck(msg)
-    cli::cli_progress_step(msg = msg)
+    if (!interactive())
+        cli::cli_text(paste("*", msg))
+    else
+        cli::cli_progress_step(msg = msg)
 }
 
 handleError <- function(...)
