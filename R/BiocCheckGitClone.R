@@ -90,7 +90,6 @@ BiocCheckGitClone <- function(package=".", ...)
     options(warn = 1, cli.width = 80)
 
     .BiocCheck$addMetadata(.BiocPackage)
-    .BiocCheck$verbose <- TRUE
     .BiocCheck$show_meta()
 
     # BiocCheck checks --------------------------------------------------------

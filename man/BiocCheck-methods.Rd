@@ -19,9 +19,6 @@ vector is handled with \code{paste0} and made into a list and appended with
 \item{messages}{\code{character()} Often a vector of file names where the check
 was triggered.}
 
-\item{verbose}{\code{logical(1)} Whether or not to output both the \code{help_text} and
-\code{messages} as part of the report}
-
 \item{debug}{\code{logical(1)} Whether to append the name of the originating check
 name into for trace-ability}
 

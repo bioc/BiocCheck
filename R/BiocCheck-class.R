@@ -43,11 +43,6 @@
 #' @field metadata `list()` A list of additional information relevant to the
 #'   package and its state. See details.
 #'
-#' @field verbose `logical(1)` Whether to show the full information pertaining
-#'   to the checks. A `FALSE` value will only show the condition messages
-#'   and not any relevant files or additional information. The defaults are
-#'   `FALSE` and `TRUE` for `BiocCheck` and `BiocCheckGitClone`, respectively.
-#'
 #' @return A `BiocCheck` instance
 #'
 #' @keywords internal
@@ -58,8 +53,6 @@
 #' @examples
 #'
 #' bc <- BiocCheck:::.BiocCheck
-#'
-#' bc$verbose
 #'
 NULL
 
@@ -85,8 +78,6 @@ NULL
 #' @param messages `character()` Often a vector of file names where the check
 #'   was triggered.
 #'
-#' @param verbose `logical(1)` Whether or not to output both the `help_text` and
-#'   `messages` as part of the report
 #'
 #' @param debug `logical(1)` Whether to append the name of the originating check
 #'   name into for trace-ability
@@ -141,16 +132,14 @@ NULL
         error = "list",
         warning = "list",
         note = "list",
-        metadata = "list",
-        verbose = "logical"
+        metadata = "list"
     ),
     methods = list(
-        initialize =
-            function(verbose = FALSE, ...) {
-            callSuper(verbose = verbose, ...)
+        initialize = function(...) {
+            callSuper(...)
         },
         add = function(
-            ..., condition, help_text, messages, verbose = .self$verbose
+            ..., condition, help_text, messages
         ) {
             if (missing(condition))
                 stop(
@@ -164,7 +153,7 @@ NULL
             )
             ins <- Filter(length, list(mlist, help_text, messages))
             nist <- structure(list(ins), .Names = names(mlist))
-            .messages$setMessage(nist, verbose = verbose, condition = condition)
+            .messages$setMessage(nist, condition = condition)
             .self[[condition]] <- append(.self[[condition]], nist)
             .self$log[[checkName]] <- append(.self$log[[checkName]], nist)
         },
@@ -323,9 +312,6 @@ NULL
 #' @param condition character(1) One of the three conditions handled: `error`,
 #'   `warning`, or `note`
 #'
-#' @param verbose logical(1) Whether to output the full text in the check or
-#'   only the check name itself in the report
-#'
 #' @param \dots `list()` A nested list with the check name as the top level
 #'   layer. Second level lists include any `help_text` and `messages` that are
 #'   part of the check.
@@ -342,7 +328,7 @@ NULL
         condition = "character"
     ),
     methods = list(
-        setMessage = function(..., verbose = FALSE, condition) {
+        setMessage = function(..., condition) {
             text <- list(...)[[1L]]
             .self$setCondition(condition)
             clifun <- switch(
@@ -352,20 +338,21 @@ NULL
                 note = cli_note
             )
             .self$msg <- append(.self$msg, text)
-            if (!verbose) {
-                clifun(
-                    head(unlist(text, use.names = FALSE), 1L)
-                )
+            comps <- unlist(text, recursive = FALSE, use.names = FALSE)
+            if (identical(length(comps), 1L)) {
+                clifun(unlist(comps, use.names = FALSE))
             } else {
-                lens <- lengths(text)
-                indents <- seq(4, by = 2, length.out = lens)
-                text[[1]][[lens]] <- selectSome(
-                    unlist(tail(text[[1]], 1L))
+                dotlist <- selectSome(tail(comps, 1L)[[1L]], maxToShow = 3L)
+                names(dotlist) <- rep("*", length(dotlist))
+                alerttitle <- head(
+                    unlist(text, recursive = FALSE, use.names = FALSE), -1L
                 )
-                mapply(
-                    clifun,
-                    unlist(text, recursive = FALSE, use.names = FALSE)
+                clifun(
+                    head(unlist(alerttitle, use.names = FALSE), 1L)
                 )
+                if (identical(length(comps), 3L))
+                    cli::cli_text(unlist(alerttitle, use.names = FALSE)[2L])
+                cli::cli_bullets(dotlist)
             }
             .self$msg
         },

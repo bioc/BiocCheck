@@ -10,9 +10,6 @@
 \item{condition}{character(1) One of the three conditions handled: \code{error},
 \code{warning}, or \code{note}}
 
-\item{verbose}{logical(1) Whether to output the full text in the check or
-only the check name itself in the report}
-
 \item{\dots}{\code{list()} A nested list with the check name as the top level
 layer. Second level lists include any \code{help_text} and \code{messages} that are
 part of the check.}

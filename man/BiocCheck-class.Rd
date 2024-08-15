@@ -50,18 +50,11 @@ purposes.}
 
 \item{\code{metadata}}{\code{list()} A list of additional information relevant to the
 package and its state. See details.}
-
-\item{\code{verbose}}{\code{logical(1)} Whether to show the full information pertaining
-to the checks. A \code{FALSE} value will only show the condition messages
-and not any relevant files or additional information. The defaults are
-\code{FALSE} and \code{TRUE} for \code{BiocCheck} and \code{BiocCheckGitClone}, respectively.}
 }}
 
 \examples{
 
 bc <- BiocCheck:::.BiocCheck
-
-bc$verbose
 
 }
 \seealso{
