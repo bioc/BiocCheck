@@ -5,7 +5,8 @@ on:
     branches:
       - devel
     paths:
-      - DESCRIPTION
+      - 'DESCRIPTION'
+      - '**basic_checks.yml'
   pull_request:
     branches:
       - devel

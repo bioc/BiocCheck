@@ -6,7 +6,7 @@ on:
       - devel
     paths:
       - 'DESCRIPTION'
-      - '**.yml'
+      - '**test-coverage.yml'
   pull_request:
     branches:
       - devel
