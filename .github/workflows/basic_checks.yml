@@ -48,9 +48,20 @@ jobs:
           remotes::install_cran(c("rcmdcheck", "covr"))
         shell: Rscript {0}
 
-      - name: Check
+      - name: Run rcmdcheck
         env:
           _R_CHECK_CRAN_INCOMING_REMOTE_: false
         run: rcmdcheck::rcmdcheck(args = "--no-manual", error_on = "warning", check_dir = "check")
         shell: Rscript {0}
 
+      - name: Run BiocCheck
+        env:
+          DISPLAY: ':99.0'
+        run: |
+          BiocCheck::BiocCheck(
+              dir('check', 'tar.gz$', full.names = TRUE),
+              `quit-with-status` = FALSE,
+              `no-check-R-ver` = TRUE,
+              `no-check-bioc-help` = TRUE
+          )
+        shell: Rscript {0}
