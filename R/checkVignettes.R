@@ -424,7 +424,7 @@ checkVigInstalls <- function(.BiocPackage) {
     if (length(msg_return)) {
         handleErrorFiles(
             "Installation calls found in vignette(s)",
-            messages = msg_return
+            messages = unlist(msg_return, use.names = FALSE)
         )
     }
 }

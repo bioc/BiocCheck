@@ -21,9 +21,9 @@ checkDeprecatedPackages <- function(.BiocPackage)
     logVec <- allDeprecated %in% allDepends
     if (any(logVec)){
         handleError(
-            "Package dependency in the DESCRIPTION is 'Deprecated'. ",
-            "Update your package to not rely on the following:",
-            messages = allDeprecated[logVec]
+            "Package dependency in the DESCRIPTION is 'Deprecated'.",
+            help_text = "Do not use the following package(s):",
+            messages =  allDeprecated[logVec]
         )
     }
 }
