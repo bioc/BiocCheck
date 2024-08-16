@@ -344,6 +344,8 @@ NULL
             } else {
                 dotlist <- selectSome(tail(comps, 1L)[[1L]], maxToShow = 3L)
                 names(dotlist) <- rep("*", length(dotlist))
+                dotlist <- gsub("{", "{{", dotlist, fixed = TRUE) |>
+                    gsub("}", "}}", x = _, fixed = TRUE)
                 alerttitle <- head(
                     unlist(text, recursive = FALSE, use.names = FALSE), -1L
                 )
