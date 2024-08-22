@@ -1,14 +1,14 @@
 Package: BiocCheck
 Title: Bioconductor-specific package checks
-Version: 1.41.15
-Date: 2024-08-16
+Version: 1.41.16
+Date: 2024-08-22
 Authors@R: c(
     person("Bioconductor", "Package Maintainer", ,
         "maintainer@bioconductor.org", "aut"),
     person("Lori", "Shepherd", role = "aut"),
     person("Daniel", "von Twisk", role = "ctb"),
     person("Kevin", "Rue", role = "ctb"),
-    person("Marcel", "Ramos", , "marcel.ramos@roswellpark.org",
+    person("Marcel", "Ramos", , "marcel.ramos@sph.cuny.edu",
         c("aut", "cre"), c(ORCID = "0000-0002-3242-0582")),
     person("Leonardo", "Collado-Torres", role = "ctb"),
     person("Federico", "Marini", role = "ctb")
