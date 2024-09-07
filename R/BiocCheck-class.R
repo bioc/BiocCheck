@@ -268,17 +268,17 @@ NULL
 
 cli_warning <- function(...) {
     cli::cli_div(theme = list(.warning = list(color = "orange")))
-    cli::cli_alert_warning(paste0("{.warning W: ", ..., "}"), wrap = TRUE)
+    cli::cli_alert_warning(paste0("{.warning WARNING: ", ..., "}"), wrap = TRUE)
 }
 
 cli_error <- function(...) {
     cli::cli_div(theme = list(.error = list(color = "red")))
-    cli::cli_alert_danger(paste0("{.error E: ", ..., "}"), wrap = TRUE)
+    cli::cli_alert_danger(paste0("{.error ERROR: ", ..., "}"), wrap = TRUE)
 }
 
 cli_note <- function(...) {
     cli::cli_div(theme = list(.note = list(color = "blue")))
-    cli::cli_alert_info(paste0("{.note N: ", ..., "}"), wrap = TRUE)
+    cli::cli_alert_info(paste0("{.note NOTE: ", ..., "}"), wrap = TRUE)
 }
 
 # Message-class -----------------------------------------------------------
