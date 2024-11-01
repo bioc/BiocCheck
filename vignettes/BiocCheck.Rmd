@@ -413,10 +413,10 @@ directory.
   ('=') for clarity in the code and legibility. Any use of the `=` will be
   flagged with a `NOTE`.
   
-* New submissions should not use any `.Deprecated` or `.Defunct` function calls
-  (`WARNING`). Existing packages should evolve `.Deprecated` and `.Defunct`
-  functions after a Bioconductor release according to the
-  [package guidelines][6].
+* New submissions should not use any `.Deprecated`, `.Defunct`, `lifeCycle`,
+  `deprecate_warn`, or `deprecate_stop` function calls (`WARNING`). Existing
+  packages should evolve these functions after a Bioconductor release according
+  to the [package guidelines][6].
   
 [6]: https://contributions.bioconductor.org/deprecation.html
 

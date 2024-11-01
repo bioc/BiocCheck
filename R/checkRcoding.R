@@ -132,7 +132,12 @@ checkCodingPractice <- function(.BiocPackage, parsedCode)
 
     # .Deprecated / .Defunct usage should be updated after every release
     msg_depr <- findSymbolsInRFiles(
-        .BiocPackage, c(".Deprecated", ".Defunct"), "SYMBOL_FUNCTION_CALL"
+        .BiocPackage,
+        c(
+            ".Deprecated", ".Defunct", "lifeCycle",
+            "deprecate_warn", "deprecate_stop"
+        ),
+        "SYMBOL_FUNCTION_CALL"
     )
     if (length(msg_depr)) {
         handleWarning(
