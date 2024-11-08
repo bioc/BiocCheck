@@ -240,9 +240,9 @@ NULL
         },
         toJSON = function(file) {
             out <- Filter(length, .self$log)
-            jlog <- jsonlite::toJSON(out, auto_unbox = FALSE)
             if (!.hasPkg("jsonlite"))
                 stop("Install 'jsonlite' to use the write method.")
+            jlog <- jsonlite::toJSON(out, auto_unbox = FALSE)
             jsonlite::write_json(jlog, file)
         },
         fromJSON = function(file) {
