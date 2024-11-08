@@ -116,7 +116,7 @@ BiocCheckGitClone <- function(package=".", ...)
         paste0(
             "{symbol$cross} { .BiocCheck$getNum('error') } ERRORS | ",
             "{symbol$warning} { .BiocCheck$getNum('warning') } WARNINGS | ",
-            "{symbol$bullet} { .BiocCheck$getNum('note') } NOTES\n"
+            "{symbol$info} { .BiocCheck$getNum('note') } NOTES\n"
         )
     )
     cli::cli_alert_info(
