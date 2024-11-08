@@ -69,6 +69,8 @@ checkPackageSize <- function(.BiocPackage, size=5){
 
 .in_data <- function(f) { f %in% .DATA_DIRS }
 
+.hasPkg <- function(pkg) nzchar(system.file(package = pkg))
+
 .findLargeFiles <- function(pkgdir, data_only) {
     gitignore <- file.exists(file.path(pkgdir, ".gitignore"))
     if (.hasPkg("gert") && gitignore) {

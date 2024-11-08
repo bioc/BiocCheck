@@ -1,5 +1,3 @@
-.hasPkg <- function(pkg) nzchar(system.file(package = pkg))
-
 parseFile <- function(.BiocPackage, infile) {
     dir.create(parse_dir <- tempfile())
     outfile <- file.path(parse_dir, "parseFile.tmp")
@@ -7,9 +5,8 @@ parseFile <- function(.BiocPackage, infile) {
         outfile <- infile
     if (grepl("\\.Rnw$|\\.Rmd|\\.Rrst|\\.Rhtml$|\\.Rtex", infile, TRUE)) {
         vigBuilder <- .BiocPackage$VigBuilder
-        if ("knitr" %in% vigBuilder && !.hasPkg("knitr")) {
-            stop("'knitr' required to check 'Rmd' vignettes")
-        }
+        if ("knitr" %in% vigBuilder)
+            checkInstalled("knitr")
         suppressWarnings(suppressMessages(
             capture.output({
                 try_purl_or_tangle(

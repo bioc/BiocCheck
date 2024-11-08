@@ -122,6 +122,7 @@ NULL
 #'
 NULL
 
+#' @importFrom BiocBaseUtils checkInstalled
 #' @exportClass BiocCheck
 .BiocCheck <- setRefClass("BiocCheck",
     fields = list(
@@ -240,14 +241,12 @@ NULL
         },
         toJSON = function(file) {
             out <- Filter(length, .self$log)
-            if (!.hasPkg("jsonlite"))
-                stop("Install 'jsonlite' to use the write method.")
+            checkInstalled("jsonlite")
             jlog <- jsonlite::toJSON(out, auto_unbox = FALSE)
             jsonlite::write_json(jlog, file)
         },
         fromJSON = function(file) {
-            if (!.hasPkg("jsonlite"))
-                stop("Install 'jsonlite' to use the read method.")
+            checkInstalled("jsonlite")
             infile <- jsonlite::read_json(file)[[1]]
             .self[["log"]] <- jsonlite::fromJSON(infile, simplifyVector = FALSE)
         },
