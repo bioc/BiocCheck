@@ -71,9 +71,11 @@ checkPackageSize <- function(.BiocPackage, size=5){
 
 .hasPkg <- function(pkg) nzchar(system.file(package = pkg))
 
-.findLargeFiles <- function(pkgdir, data_only) {
+.findLargeFiles <- function(.BiocPackage, data_only) {
+    pkgdir <- .BiocPackage$sourceDir
     gitignore <- file.exists(file.path(pkgdir, ".gitignore"))
-    if (.hasPkg("gert") && gitignore) {
+    sourceDir <- .BiocPackage$isSourceDir && !.BiocPackage$isTar
+    if (.hasPkg("gert") && gitignore && sourceDir) {
         fileinfo <- gert::git_ls(repo = pkgdir)
         fileinfo <- .filter_data(fileinfo, for_data = data_only)
         files <- unlist(
@@ -94,8 +96,7 @@ checkPackageSize <- function(.BiocPackage, size=5){
 
 checkIndivFileSizes <- function(.BiocPackage)
 {
-    pkgdir <- .BiocPackage$sourceDir
-    largefiles <- .findLargeFiles(pkgdir, data_only = FALSE)
+    largefiles <- .findLargeFiles(.BiocPackage, data_only = FALSE)
     if (length(largefiles))
         handleWarning(
             "Package files exceed the 5MB size limit.",
@@ -105,8 +106,7 @@ checkIndivFileSizes <- function(.BiocPackage)
 }
 
 checkDataFileSizes <- function(.BiocPackage) {
-    pkgdir <- .BiocPackage$sourceDir
-    largedata <- .findLargeFiles(pkgdir, data_only = TRUE)
+    largedata <- .findLargeFiles(.BiocPackage, data_only = TRUE)
     if (length(largedata))
         handleWarning(
             "Data files exceed the 5MB size limit.",
