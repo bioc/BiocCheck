@@ -145,6 +145,16 @@ checkVersionNumber <- function(.BiocPackage)
     if (!nzchar(res)) NULL else res
 }
 
+pullMaintainerEmail <- function(pkgpath) {
+    desc <- file.path(pkgpath, "DESCRIPTION")
+    stopifnot(file.exists(desc))
+    dcf <- read.dcf(desc)
+    if ("Maintainer" %in% colnames(dcf))
+        .MainEmailMaintainer(dcf)
+    else if ("Authors@R" %in% colnames(dcf))
+        .MainEmailAuthorsAtR(dcf)
+}
+
 getMaintainerEmail <- function(.BiocPackage)
 {
     # Eventually update this to just look at Authors@R
