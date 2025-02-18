@@ -302,7 +302,7 @@ getFunctionLengths <- function(df)
     rownames(df) <- NULL
     max <- nrow(df)
     res <- list()
-    funcRows <- df[df$token == "FUNCTION",]
+    funcRows <- df[df$token == c("FUNCTION", "'\\\\'"), ]
     lst <- lapply(split(df, rownames(df)), as.list)
     if (nrow(funcRows))
     {
