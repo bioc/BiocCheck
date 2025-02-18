@@ -296,70 +296,89 @@ getParent <- function(view, biocViewsVocab)
     parent
 }
 
-getFunctionLengths <- function(df)
-{
+.FUNCTION_LENGTHS_SENTINEL <- list(
+    data.frame(
+        length = integer(0L),
+        startLine = integer(0L),
+        endLine = integer(0L)
+    )
+)
+
+getFunctionLengths <- function(df) {
     df <- df[df$terminal & df$parent > -1,]
+
+    # Identify comment-only lines
+    is_comment_only_line <- df$token == "COMMENT" &
+        !(duplicated(df$line1) | duplicated(df$line1, fromLast=TRUE))
+
+    # Create a lookup table for comment-only lines
+    comment_lines <- unique(df$line1[is_comment_only_line])
+
+    # Create a lookup table for all lines that have code
+    code_lines <- unique(df$line1[!is_comment_only_line])
+
     rownames(df) <- NULL
     max <- nrow(df)
     res <- list()
-    funcRows <- df[df$token == c("FUNCTION", "'\\\\'"), ]
+    funcRows <- df[df$token %in% c("FUNCTION", "'\\\\'"), ]
     lst <- lapply(split(df, rownames(df)), as.list)
-    if (nrow(funcRows))
-    {
-        for (i in seq_len(nrow(funcRows)))
-        {
-            funcRowId <- as.integer(rownames(funcRows)[i])
-            funcRow <- funcRows[as.character(funcRowId),]
-            funcStartLine <- funcRow$line1 # this might get updated later
-            funcLines <- NULL
-            funcName <- "_anonymous_"
-            # attempt to get function name
-            if (funcRowId >= 3)
-            {
-                up1 <- lst[[as.character(funcRowId -1)]]
-                #up1 <- df[as.character(funcRowId - 1),]
-                #up2 <- df[as.character(funcRowId - 2),]
-                up2 <- lst[[as.character(funcRowId -2)]]
-                if (up1$token %in% c("EQ_ASSIGN", "LEFT_ASSIGN") &&
-                    up2$token == "SYMBOL")
-                {
-                    funcName <- up2$text
-                    funcStartLine <- up2$line1
-                }
-            }
-            j <- funcRowId + 1
-            saveme <- NULL
-            while (TRUE)
-            {
-                #thisRowId <- as.integer(rownames(df)[j])
-                thisRowId <- j
-                #thisRow <- df[thisRowId,]
-                thisRow <- lst[[as.character(thisRowId)]]
-                if (thisRowId == max || thisRow$parent > funcRow$parent)
-                {
-                    lineToExamine <- ifelse(thisRowId == max, max, saveme)
 
-                    endLine <- lst[[as.character(lineToExamine)]]$line2
-                    funcLines <- endLine - (funcStartLine -1)
-                    if(funcName == "_anonymous_")
-                        funcName <- paste0(funcName, ".", funcStartLine)
-                    res[[funcName]] <- c(length=funcLines,
-                        startLine=funcStartLine, endLine=endLine)
-                    break
-                } else {
-                    if (thisRow$parent > 0)
-                    {
-                        saveme <- thisRowId
-                    }
-                }
-                j <- j + 1
-            }
+    if (!nrow(funcRows))
+        return(.FUNCTION_LENGTHS_SENTINEL)
 
+    for (i in seq_len(nrow(funcRows))) {
+        funcRowId <- as.integer(rownames(funcRows)[i])
+        funcRow <- funcRows[as.character(funcRowId),]
+        funcStartLine <- funcRow$line1 # this might get updated later
+        funcLines <- NULL
+        funcName <- "_anonymous_"
+
+        # attempt to get function name
+        if (funcRowId >= 3) {
+            up1 <- lst[[as.character(funcRowId -1)]]
+            up2 <- lst[[as.character(funcRowId -2)]]
+            if (up1$token %in% c("EQ_ASSIGN", "LEFT_ASSIGN", "EQ_SUB") &&
+                up2$token %in% c("SYMBOL", "SYMBOL_SUB")) {
+                funcName <- up2$text
+                funcStartLine <- up2$line1
+            }
         }
-    } else {
-       res <- list(data.frame(
-           length = integer(0), startLine = integer(0), endLine = integer(0)
-       ))
+
+        j <- funcRowId + 1
+        saveme <- NULL
+        while (TRUE) {
+            thisRowId <- j
+            thisRow <- lst[[as.character(thisRowId)]]
+            if (thisRowId == max || thisRow$parent > funcRow$parent) {
+                lineToExamine <- ifelse(thisRowId == max, max, saveme)
+                endLine <- lst[[as.character(lineToExamine)]]$line2
+                funcLines <- endLine - (funcStartLine -1)
+
+                # Count coding lines within the function's range
+                function_code_lines <- code_lines[code_lines >= funcStartLine &
+                                                      code_lines <= endLine]
+                function_comment_lines <- comment_lines[comment_lines >= funcStartLine &
+                                                            comment_lines <= endLine]
+
+                # Get unique lines that contain actual code
+                actual_coding_lines <- setdiff(function_code_lines, function_comment_lines)
+                coding_line_count <- length(actual_coding_lines)
+
+                if(funcName == "_anonymous_")
+                    funcName <- paste0(funcName, ".", funcStartLine)
+
+                res[[funcName]] <- c(length=funcLines,
+                                     startLine=funcStartLine,
+                                     endLine=endLine,
+                                     codingLines=coding_line_count)
+                break
+            } else {
+                if (thisRow$parent > 0) {
+                    saveme <- thisRowId
+                }
+            }
+            j <- j + 1
+        }
     }
     res
 }
