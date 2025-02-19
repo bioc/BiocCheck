@@ -38,3 +38,13 @@ f7 <- function(x, ...) {
 
 
 }
+
+# function with comments and blank lines
+## DO NOT move without modifying unit test
+f8 <- function(a) {
+    # this is a comment
+    b <- a + 1
+    # blank space below
+
+    return(b)
+}

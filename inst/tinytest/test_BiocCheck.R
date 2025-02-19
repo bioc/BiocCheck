@@ -1135,15 +1135,25 @@ file <- system.file("testpackages", "testpkg0", "R",
     "parseme.R", package="BiocCheck")
 df <- getParseData(parse(file, keep.source = TRUE))
 res <- BiocCheck:::getFunctionLengths(df)
-lsnames <- c("length", "startLine", "endLine")
-values <- c(2, 1, 2, 1, 3, 3, 1, 6, 6, 5, 9, 13, 4, 16,
-    19, 6, 23, 28, 1, 31, 31, 1, 33, 33, 6, 35, 40)
-names(values) <- rep(lsnames, 9)
-expected <- split(values, rep(1:9, each = 3))
-names(expected) <- c("_anonymous_.1", "fa", "f2", "f3", "f4",
-    "_anonymous_.23", "f5", "f6", "f7")
-
-expect_true(all.equal(expected, res))
+res0 <- tibble::tribble(
+    ~length, ~startLine, ~endLine, ~codingLines,
+    2,          1,        2,            2,
+    1,          3,        3,            1,
+    1,          6,        6,            1,
+    5,          9,       13,            4,
+    4,         16,       19,            4,
+    6,         23,       28,            3,
+    1,         31,       31,            1,
+    1,         33,       33,            1,
+    6,         35,       40,            2,
+    7,         44,       50,            4
+)
+res0 <- apply(res0, 1L, force, simplify = FALSE)
+names(res0) <- c(
+    "_anonymous_.1", "fa", "f2", "f3", "f4", "_anonymous_.23",
+    "f5", "f6", "f7", "f8"
+)
+expect_identical(res0, res)
 
 # getFunctionLengths2 -----------------------------------------------------
 ## 1 function is greater than 50 lines long
