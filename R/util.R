@@ -315,8 +315,7 @@ getFunctionLengths <- function(df) {
     # Create a lookup table for comment-only lines
     comment_lines <- unique(df$line1[is_comment_only_line])
 
-    # Create a lookup table for all lines that have code
-    code_lines <- unique(df$line1[!is_comment_only_line])
+    all_lines <- unique(df$line1)
 
     rownames(df) <- NULL
     max <- nrow(df)
@@ -345,44 +344,51 @@ getFunctionLengths <- function(df) {
             }
         }
 
-        j <- funcRowId + 1
-        saveme <- NULL
-        while (TRUE) {
-            thisRowId <- j
-            thisRow <- lst[[as.character(thisRowId)]]
-            if (thisRowId == max || thisRow$parent > funcRow$parent) {
-                lineToExamine <- ifelse(thisRowId == max, max, saveme)
-                endLine <- lst[[as.character(lineToExamine)]]$line2
-                funcLines <- endLine - (funcStartLine -1)
+        findFunctionEnd <- function() {
+            parent_level <- funcRow$parent
+            last_valid_row <- NULL
 
-                # Count coding lines within the function's range
-                function_code_lines <- code_lines[
-                    code_lines >= funcStartLine & code_lines <= endLine
-                ]
-                function_comment_lines <- comment_lines[
-                    comment_lines >= funcStartLine & comment_lines <= endLine
-                ]
-
-                # Get unique lines that contain actual code
-                actual_coding_lines <-
-                    setdiff(function_code_lines, function_comment_lines)
-                coding_line_count <- length(actual_coding_lines)
-
-                if(funcName == "_anonymous_")
-                    funcName <- paste0(funcName, ".", funcStartLine)
-
-                res[[funcName]] <- c(length=funcLines,
-                                     startLine=funcStartLine,
-                                     endLine=endLine,
-                                     codingLines=coding_line_count)
-                break
-            } else {
-                if (thisRow$parent > 0) {
-                    saveme <- thisRowId
+            for (j in seq((funcRowId + 1), max)) {
+                curr_row <- lst[[as.character(j)]]
+                if (curr_row$parent > parent_level) {
+                    return(j - 1)
+                }
+                if (curr_row$parent > 0) {
+                    last_valid_row <- j
+                }
+                if (j == max) {
+                    return(max)
                 }
             }
-            j <- j + 1
+            return(last_valid_row)
         }
+
+        # Get end line and calculate metrics
+        end_row_id <- findFunctionEnd()
+        end_row <- lst[[as.character(end_row_id)]]
+        endLine <- end_row$line2
+        funcLines <- endLine - (funcStartLine - 1)
+
+        # Count coding lines
+        function_lines <-
+            all_lines[all_lines >= funcStartLine & all_lines <= endLine]
+        function_comment_lines <- comment_lines[
+            comment_lines >= funcStartLine &  comment_lines <= endLine
+        ]
+        coding_line_count <- length(
+            setdiff(function_lines, function_comment_lines)
+        )
+
+        # Store results
+        if (funcName == "_anonymous_")
+            funcName <- paste0(funcName, ".", funcStartLine)
+
+        res[[funcName]] <- c(
+            length = funcLines,
+            startLine = funcStartLine,
+            endLine = endLine,
+            codingLines = coding_line_count
+        )
     }
     res
 }
