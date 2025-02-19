@@ -96,6 +96,10 @@ BiocCheckGitClone <- function(package=".", ...)
     handleCheck("Checking valid files...")
     checkBadFiles(.BiocPackage)
 
+    handleCheck("Checking individual file sizes...")
+    checkIndivFileSizes(.BiocPackage)
+    checkDataFileSizes(.BiocPackage)
+
     handleCheck("Checking for stray BiocCheck output folders...")
     checkBiocCheckOutputFolder(.BiocPackage)
 
