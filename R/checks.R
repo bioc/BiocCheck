@@ -82,7 +82,7 @@ checkPackageSize <- function(.BiocPackage, size=5){
             fileinfo[fileinfo[["filesize"]] > .MAX_FILE_SIZE, "path"]
         )
         file.path(pkgdir, files)
-    } else {
+    } else if (sourceDir) {
         folders <- list.dirs(pkgdir, full.names = FALSE, recursive = TRUE)
         decision <- if (data_only) force else Negate
         folders <- Filter(decision(.in_data), folders)
