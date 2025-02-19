@@ -1131,8 +1131,10 @@ expect_equivalent(length(msg), 14L)
 .BiocCheck$zero()
 
 # getFunctionLengths ------------------------------------------------------
-file <- system.file("testpackages", "testpkg0", "R",
-    "parseme.R", package="BiocCheck")
+file <- system.file(
+    "testpackages", "testpkg0", "R", "parseme.R",
+    package = "BiocCheck"
+)
 df <- getParseData(parse(file, keep.source = TRUE))
 res <- BiocCheck:::getFunctionLengths(df)
 res0 <- tibble::tribble(
