@@ -69,7 +69,11 @@ checkPackageSize <- function(.BiocPackage, size=5){
 
 .in_data <- function(f) { f %in% .DATA_DIRS }
 
-.hasPkg <- function(pkg) nzchar(system.file(package = pkg))
+.hasPkg <- function(pkg) {
+    suppressWarnings({
+        nzchar(system.file(package = pkg))
+    })
+}
 
 .findLargeFiles <- function(.BiocPackage, data_only) {
     pkgdir <- .BiocPackage$sourceDir
