@@ -1,3 +1,17 @@
+CHANGES IN VERSION 1.44.0
+-----------------------
+
+NEW FEATURES
+
+    o Add `lifeCycle`, `deprecate_warn`, and `deprecate_stop` to the list of
+    functions for the `.Deprecated` / `.Defunct` check.
+    o Support checking `\()` syntax as anonymous R functions.
+    o Exclude comment-only lines in function lengths check (@hpages, #220)
+
+BUG FIXES AND MINOR IMPROVEMENTS
+
+    o Check file sizes only for source directories and in `BiocCheckGitClone`
+
 CHANGES IN VERSION 1.42.0
 -----------------------
 
