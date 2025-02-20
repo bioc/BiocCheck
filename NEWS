@@ -7,10 +7,10 @@ NEW FEATURES
 
 BUG FIXES AND MINOR IMPROVEMENTS
 
-    o Fixed issue in `checkVigSuggests` internal function to only extract
+    o Fix issue in `checkVigSuggests` internal function to only extract
     packages that should be in the `Suggests` field.
-    o Fixed issue where the lookbacks in static code searches were not
-    iterating over all of the indices. This affected all functions that
+    o Fix issue where the lookbacks in static code searches were not
+    iterating over all of the indices. This affects all functions that
     searched through code in R and vignette files.
     o Non-interactive sessions default to old output syntax.
     o Use full names e.g., 'WARNING' in report output for `grep`ping by
